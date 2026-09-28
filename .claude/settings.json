@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "enabledMcpjsonServers": ["astro-docs", "context7", "playwright", "github"],
+  "permissions": {
+    "allow": [
+      "Bash(npm run *)",
+      "Bash(npm install)",
+      "Bash(npm ls *)",
+      "Bash(npx astro *)",
+      "Bash(npx prettier *)",
+      "Bash(npx eslint *)",
+      "Bash(node .claude/skills/*)",
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(git branch*)",
+      "WebFetch(domain:docs.astro.build)",
+      "WebFetch(domain:tailwindcss.com)",
+      "WebFetch(domain:api.github.com)",
+      "mcp__astro-docs",
+      "mcp__context7"
+    ],
+    "ask": [
+      "Bash(git push*)",
+      "Bash(git merge*)",
+      "Bash(npm install *)"
+    ],
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Bash(git push --force*)",
+      "Bash(git push -f*)",
+      "Bash(rm -rf *)"
+    ]
+  }
+}

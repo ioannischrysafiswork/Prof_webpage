@@ -1,0 +1,44 @@
+# Matplotlib style matching the website design tokens.
+# Ink colour (#111111) and series colours are placeholders that export_figure.py
+# rewrites to currentColor / var(--plot-N). Keep these exact hex values.
+
+figure.figsize      : 6.4, 4.0
+figure.dpi          : 110
+figure.facecolor    : none
+savefig.facecolor   : none
+savefig.transparent : True
+savefig.bbox        : tight
+savefig.pad_inches  : 0.05
+svg.fonttype        : none
+
+font.family         : sans-serif
+font.sans-serif     : Inter, IBM Plex Sans, DejaVu Sans, Arial
+font.size           : 10
+mathtext.fontset    : cm
+
+text.color          : 111111
+axes.labelcolor     : 111111
+axes.edgecolor      : 111111
+axes.facecolor      : none
+axes.linewidth      : 0.8
+axes.spines.top     : False
+axes.spines.right   : False
+axes.grid           : True
+axes.titlesize      : 11
+axes.labelsize      : 10
+axes.prop_cycle     : cycler('color', ['1f5fbf', 'd9822b', '2a9d8f', '8a4fbf', 'c0392b', '6b7c93'])
+
+grid.color          : 111111
+grid.alpha          : 0.12
+grid.linewidth      : 0.6
+
+xtick.color         : 111111
+ytick.color         : 111111
+xtick.direction     : out
+ytick.direction     : out
+
+lines.linewidth     : 1.6
+lines.markersize    : 4
+
+legend.frameon      : False
+legend.fontsize     : 9
