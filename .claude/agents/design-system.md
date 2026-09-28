@@ -1,7 +1,7 @@
 ---
 name: design-system
 description: Owns the visual identity — design tokens, typography, colour palette, light/dark theme, layout primitives, shared UI components (Header, Nav, Footer, Card, Chip, Timeline, SectionHeading), motion, and print styles. Use for anything about how the site looks and feels across all pages.
-tools: Read, Write, Edit, Glob, Grep, Bash, Skill
+tools: Read, Write, Edit, Glob, Grep, Bash, Skill, mcp__context7, mcp__playwright
 mcpServers:
   - context7
   - playwright

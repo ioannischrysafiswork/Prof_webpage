@@ -1,9 +1,8 @@
 ---
 name: deploy-engineer
 description: Sets up and maintains deployment to GitHub Pages — GitHub Actions workflow, Pages configuration, site/base settings, custom domain (CNAME, DNS guidance, HTTPS), and post-deploy verification of the stable URLs /, /work and /academic. Use when deploying or changing hosting.
-tools: Read, Write, Edit, Glob, Grep, Bash, WebFetch, Skill
+tools: Read, Write, Edit, Glob, Grep, Bash, WebFetch, Skill, mcp__astro-docs
 mcpServers:
-  - github
   - astro-docs
 skills:
   - site-preflight

@@ -1,0 +1,22 @@
+# Private raw inputs (CVs, theses, certificates) — never published
+source-material/
+
+# Dependencies & build output
+node_modules/
+dist/
+.astro/
+
+# Secrets & local config
+.env
+.env.*
+.claude/settings.local.json
+
+# Logs & OS files
+npm-debug.log*
+*.log
+.DS_Store
+Thumbs.db
+
+# Python (scientific-figures)
+__pycache__/
+.venv/

@@ -1,7 +1,7 @@
 ---
 name: academic-page-builder
 description: Builds and refines the Academic page (/academic) — intro on physics and computational methods, academic roadmap timeline, Bachelor's and Master's degrees, other qualifications, both theses, and academic exercises, projects and simulations. Use for any change to src/pages/academic.astro or src/components/academic/.
-tools: Read, Write, Edit, Glob, Grep, Bash, Skill
+tools: Read, Write, Edit, Glob, Grep, Bash, Skill, mcp__astro-docs, mcp__playwright
 mcpServers:
   - astro-docs
   - playwright

@@ -1,11 +1,10 @@
 ---
 name: work-page-builder
 description: Builds and refines the Work Experience page (/work) — professional intro, experience timeline, certifications, selected GitHub projects, and programming/technical skills. Use for any change to src/pages/work.astro or src/components/work/.
-tools: Read, Write, Edit, Glob, Grep, Bash, WebFetch, Skill
+tools: Read, Write, Edit, Glob, Grep, Bash, WebFetch, Skill, mcp__astro-docs, mcp__playwright
 mcpServers:
   - astro-docs
   - playwright
-  - github
 model: inherit
 ---
 

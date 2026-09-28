@@ -1,7 +1,7 @@
 ---
 name: home-page-builder
 description: Builds and refines the Home page (/) — personal introduction, highlights of major qualifications, clear entry cards to Work Experience and Academic, interests, and contact. Use for any change to src/pages/index.astro or src/components/home/.
-tools: Read, Write, Edit, Glob, Grep, Bash, Skill
+tools: Read, Write, Edit, Glob, Grep, Bash, Skill, mcp__astro-docs, mcp__playwright
 mcpServers:
   - astro-docs
   - playwright

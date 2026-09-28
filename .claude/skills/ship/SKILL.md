@@ -22,9 +22,8 @@ Change: `$ARGUMENTS`
 4. **Commit** — stage only relevant files (never `source-material/` if it is git-ignored,
    never `.env*`, never `dist/`). Conventional Commit message, e.g.
    `content: add master thesis summary and key figure`.
-5. **Push** the branch. If the GitHub MCP server is connected (or `gh` CLI is installed),
-   open a PR to `main` with a summary and the preflight table; otherwise give Ioannis the
-   exact commands.
+5. **Push** the branch and open a PR to `main` with the `gh` CLI (`gh pr create`), with a
+   summary and the preflight table.
 6. **Merge** only after Ioannis confirms. Merging to `main` triggers the deploy workflow.
 7. **Verify** — delegate to `deploy-engineer` for post-deploy checks of `/`, `/work`,
    `/academic`, 404, sitemap and OG images on the live domain. Report the live URLs.

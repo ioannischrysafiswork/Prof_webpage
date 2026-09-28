@@ -192,8 +192,8 @@ Design tokens (colours, type scale, spacing, radii, shadows, motion durations) a
 │   └── settings.json            # permissions + approved MCP servers
 ├── source-material/             # RAW inputs from Ioannis: CV PDFs, thesis PDFs,
 │                                #   certificates, notes. Read by content-curator.
-│                                #   NOT published (outside src/public). Add to .gitignore
-│                                #   if it holds private data — a Pages repo is usually public.
+│                                #   NOT published (outside src/public) and
+│                                #   git-ignored — a Pages repo is usually public.
 ├── public/
 │   ├── CNAME                    # only if a custom domain is used
 │   ├── documents/               # downloadable PDFs (CV, theses) — published
@@ -317,13 +317,15 @@ Skills marked *manual* run only when Ioannis types the slash command.
 | `astro-docs` | Official, always-current Astro documentation — check it before using any Astro API | none |
 | `context7` | Up-to-date docs for Tailwind, KaTeX, Playwright, Svelte and other libraries | none |
 | `playwright` | Drive a real browser for visual QA: screenshots at 360/768/1024/1440px, both themes, print preview | Node.js installed (runs via `npx`) |
-| `github` | Read Ioannis's repos to curate projects, open PRs, check Actions/Pages status | env var `GITHUB_PAT` (fine-grained token, see below) |
+
+**GitHub** is accessed through the **`gh` CLI** (installed and logged in as
+`ioannischrysafiswork`), not an MCP server — no token to manage. Use it to list repos for
+project curation (`gh repo list`), open PRs (`gh pr create`), and check Actions/Pages
+status (`gh run list`, `gh run view`).
 
 Rules: prefer `astro-docs` / `context7` over memory for library APIs and versions.
-Never print, log or commit tokens. `settings.json` pre-approves these servers and safe
-commands; `git push`/`merge` always ask first; force-push is denied.
-
-GitHub token: GitHub → Settings → Developer settings → Fine-grained tokens → access to
-this repository only, permissions *Contents: read/write, Pull requests: read/write,
-Actions: read, Pages: read, Metadata: read*. On Windows: `setx GITHUB_PAT "<token>"`,
-then open a new terminal.
+Never print, log or commit tokens. `.mcp.json` must stay at the **repo root** (Claude Code
+does not read it from `.claude/`). Subagents list the servers they use under `mcpServers:`
+and the matching `mcp__<server>` entries in `tools:`. `settings.json` pre-approves these
+servers and read-only `gh` commands; `git push`/`merge`, `gh pr create`/`merge` always ask
+first; force-push is denied.

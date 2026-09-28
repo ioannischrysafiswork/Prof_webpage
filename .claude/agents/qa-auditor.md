@@ -1,7 +1,7 @@
 ---
 name: qa-auditor
 description: Read-only quality reviewer. Audits accessibility (WCAG 2.2 AA), performance, SEO, responsive layout, print output, dark mode, URL/anchor stability, and content accuracy against CLAUDE.md. Use after any page is built or changed, and before every deploy. Reports issues; does not fix them.
-tools: Read, Glob, Grep, Bash, WebFetch, Skill
+tools: Read, Glob, Grep, Bash, WebFetch, Skill, mcp__playwright
 mcpServers:
   - playwright
 skills:

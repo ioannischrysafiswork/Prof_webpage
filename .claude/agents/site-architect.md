@@ -1,7 +1,7 @@
 ---
 name: site-architect
 description: Scaffolds and maintains the Astro project foundation — config, routing (/, /work, /academic), base-URL helper, TypeScript, tooling, and content collection schemas. Use first on a fresh repo, and whenever project structure, dependencies, routing, or astro.config.mjs must change.
-tools: Read, Write, Edit, Glob, Grep, Bash, WebFetch, Skill
+tools: Read, Write, Edit, Glob, Grep, Bash, WebFetch, Skill, mcp__astro-docs, mcp__context7
 mcpServers:
   - astro-docs
   - context7

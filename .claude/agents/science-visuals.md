@@ -1,7 +1,7 @@
 ---
 name: science-visuals
 description: Specialist for scientific and visual components — KaTeX equations, figures and captions, plots (SVG / Observable Plot), lightweight canvas simulations, and the decorative physics-inspired Home hero animation. Use when a page needs equations, figures, charts, simulation demos, or generative visuals.
-tools: Read, Write, Edit, Glob, Grep, Bash, Skill
+tools: Read, Write, Edit, Glob, Grep, Bash, Skill, mcp__context7, mcp__playwright
 mcpServers:
   - context7
   - playwright

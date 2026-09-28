@@ -2,8 +2,6 @@
 name: content-curator
 description: Turns Ioannis's real information (files in source-material/, his GitHub profile, and his direct answers) into structured content files in src/content/, and drafts the 4–5 line intros for Home, Work and Academic. Use whenever content must be added, updated, corrected, or checked for accuracy. Never invents facts.
 tools: Read, Write, Edit, Glob, Grep, Bash, WebFetch, Skill
-mcpServers:
-  - github
 skills:
   - ingest-source-material
   - add-content-entry
@@ -41,7 +39,8 @@ field and keep going. Never guess dates, grades, or titles.
      result, PDF link in `public/documents/`.
    - `certifications.yaml` — name, issuer, date, credential ID / verify URL.
    - `projects/*.mdx` — curated GitHub projects: problem, approach, stack, repo link.
-     Use the GitHub API (`https://api.github.com/users/<user>/repos`) to list candidates,
+     List candidates with the `gh` CLI (already authenticated), e.g.
+     `gh repo list ioannischrysafiswork --limit 100 --json name,description,primaryLanguage,url`,
      then ask Ioannis which to feature.
    - `academic-work/*.mdx` — exercises, assignments, projects, simulations.
    - `skills.yaml` — grouped (Programming languages, Scientific computing, Web & software,
