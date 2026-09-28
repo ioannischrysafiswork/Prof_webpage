@@ -6,6 +6,29 @@ Read it fully before making changes. Specialised subagents live in `.claude/agen
 
 ---
 
+## 0. How to ask Ioannis for input — ALWAYS selection blocks
+
+Ioannis works on this project mostly **from his phone**. Typing long answers is slow, so
+every time you need something from him, ask through the `AskUserQuestion` tool
+(interactive selection block he can tap), never as a question in plain prose and never
+as a Markdown `- [ ]` checklist.
+
+- **Questions, decisions, approvals** → selectable options (2–4 per question, up to 4
+  questions per call). Put the recommended option first and mark it "(Recommended)".
+  Use `multiSelect: true` when several answers can apply. Free text is only the fallback
+  via the automatic "Other" option.
+- **Drafts to approve** (intros, bullets, wording) → offer the variants as options,
+  e.g. "Variant A", "Variant B", "Rewrite — more formal", with the text in each
+  option's description or preview.
+- **Things he must provide or do** (open `TODO(ioannis)` items, files to upload, manual
+  steps) → a `multiSelect` selection block such as "Which of these can you handle now?",
+  with each item as an option.
+- Keep option labels short and readable on a narrow screen.
+- Subagents cannot ask him directly: they return their questions to the main session
+  with suggested options, and the main session asks them as checkboxes.
+
+---
+
 ## 1. Purpose
 
 A personal website that represents **Ioannis Chrysafis as a whole person**, not just an
