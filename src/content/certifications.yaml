@@ -53,41 +53,33 @@
     credential: https://ude.my/UC-4dfc9f38-5dbe-4c42-a55d-85f0b2b789cd
   featured: false
 
-# --- Listed on the CV of Aug 2025 (source: cv-2025-08-17.pdf p1). Dates/IDs not on the CV. ---
+# --- Listed on the CV of Aug 2025 (source: cv-2025-08-17.pdf p1). The year in each name is
+# its date (confirmed by Ioannis, 2026-09-29); no credential IDs or verification links. ---
 
 - id: oci-2024-application-integration-professional
   name: Oracle Cloud Infrastructure 2024 Certified Application Integration Professional
   issuer: Oracle
-  date: 'TODO(ioannis): issue month as YYYY-MM'
-  credentialId: 'TODO(ioannis): credential ID, if you want it shown'
+  date: '2024'
   tech:
     - Oracle Integration Cloud
-  links:
-    credential: 'TODO(ioannis): verification URL (Oracle CertView / Credly), if any'
   featured: true
   order: 1
 
 - id: oci-2024-generative-ai-professional
   name: Oracle Cloud Infrastructure 2024 Generative AI Certified Professional
   issuer: Oracle
-  date: 'TODO(ioannis): issue month as YYYY-MM'
-  credentialId: 'TODO(ioannis): credential ID, if you want it shown'
+  date: '2024'
   tech:
     - Generative AI
     - Oracle Cloud Infrastructure
-  links:
-    credential: 'TODO(ioannis): verification URL (Oracle CertView / Credly), if any'
   featured: true
   order: 2
 
 - id: oci-foundations-2021-associate
   name: Oracle Cloud Infrastructure Foundations 2021 Associate
   issuer: Oracle
-  date: 'TODO(ioannis): issue month as YYYY-MM'
-  credentialId: 'TODO(ioannis): credential ID, if you want it shown'
+  date: '2021'
   tech:
     - Oracle Cloud Infrastructure
-  links:
-    credential: 'TODO(ioannis): verification URL (Oracle CertView / Credly), if any'
   featured: false
   order: 3
