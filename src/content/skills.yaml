@@ -1,6 +1,6 @@
 # Skills grouped by category, each with context of use. No ratings or percentages.
 # Schema: src/content.config.ts (skills). Groups are structural; items must be verified.
-# Sources: cv-2025-08-17.pdf (CV), certificates/*.pdf (courses completed at
+# Sources: cv-2025-08-17.pdf (CV), cv-computational.pdf (academic CV), certificates/*.pdf (courses completed at
 # Netcompany-Intrasoft), github.com/giannis93/Bachelor-thesis-prog. See source-material/_inventory.md.
 
 - id: programming-languages
@@ -13,7 +13,7 @@
     - name: PL/SQL
       context: Procedures and data extraction packages at Deloitte; PL/SQL by Example course (2025)
     - name: Python
-      context: Python GUI for the RNS neutron-star code (Bachelor's thesis); simulations in the MSc in Computational Physics
+      context: Python GUI for the RNS neutron-star code (Bachelor's thesis); simulations and visualisation of results in the MSc in Computational Physics
       icon: simple-icons:python
     - name: C
       context: numerical simulations, RNS code (rns.c)
@@ -24,13 +24,15 @@
   order: 2
   items:
     - name: Numerical methods and simulation
-      context: Simulations in electromagnetics, quantum mechanics and materials (MSc)
+      context: Root finding and explicit and implicit methods for differential equations; simulations of electromagnetic waves, heat transfer, quantum mechanical phenomena and materials (MSc)
+    - name: Finite-difference time-domain (FDTD) method
+      context: Maxwell's equations with Yee's algorithm, absorbing boundaries, dipole radiation, layered dielectrics and waveguides (MSc, Computational Electromagnetism)
     - name: OpenMP
-      context: Parallel computing (MSc)
+      context: Parallel programming (MSc)
     - name: HPC clusters
       context: Deployed the Bachelor's thesis simulations on the "Aristotelis" cluster of Aristotle University
     - name: MATLAB
-      context: Numerical methods (MSc)
+      context: Numerical methods and visualisation of simulation results (MSc)
     - name: Matplotlib and Tkinter
       context: Plotting and GUI for the RNS code interface (Bachelor's thesis)
 
@@ -95,4 +97,4 @@
     - name: Greek
       context: Native
     - name: English
-      context: Fluent; ECCE, University of Michigan (2006)
+      context: Fluent; ECCE (B2), University of Michigan (2006)

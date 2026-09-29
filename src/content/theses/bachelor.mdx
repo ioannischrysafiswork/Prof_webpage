@@ -1,24 +1,32 @@
 ---
-# Source: cv-2025-08-17.pdf p2 (title, tools, links); github.com/giannis93/Bachelor-thesis-prog.
-# Supervisor, date, abstract and key result need the thesis PDF or Ioannis's answers.
+# Sources: cv-computational.pdf p2 "Bachelor thesis" (supervisor, scope, tools);
+# cv-2025-08-17.pdf p2 (title, links); github.com/giannis93/Bachelor-thesis-prog (Tkinter, Matplotlib).
+# Title: cv-2025-08-17 has "Study of Rotating Neutron Stars Using RNS Code"; cv-computational has
+# "Study of rotating neutron stars using the RNS code." Kept as is until Ioannis confirms the official title.
+# The CVs give no abstract, key result or submission date: those need the thesis PDF or Ioannis.
 level: bachelor
 title: Study of Rotating Neutron Stars Using RNS Code
-supervisor: 'TODO(ioannis): supervisor name and title'
+supervisor: Charalampos Moustakidis
 institution: Aristotle University of Thessaloniki
 department: Physics Department, School of Science
 end: 'TODO(ioannis): submission month as YYYY-MM'
 abstract: 'TODO(ioannis): thesis abstract, or the thesis PDF so it can be summarised faithfully'
 methods:
   - Numerical models of rotating neutron stars computed with the RNS code (rns.c v1.1c)
-  - Python GUI to configure, run and plot RNS computations
-  - Simulation deployment on the "Aristotelis" HPC cluster of Aristotle University
+  - Python 3 GUI to set the rns.c arguments, run the program, filter the output and plot or export the results
+  - Testing on the "Aristotelis" HPC cluster of Aristotle University
 tech:
-  - Python
+  - Python 3
   - Tkinter
   - Matplotlib
   - rns.c v1.1c
   - HPC cluster
 keyResult: 'TODO(ioannis): the main result or conclusion of the thesis'
+highlights:
+  - Studied the physics of neutron stars and the main functions of rns.c v1.1c, the RNS code for rotating neutron stars.
+  - Developed a Python 3 graphical environment that runs rns.c from its arguments, filters the output and saves (.xls) or plots the chosen data.
+  - Built rns.c v1.1c as a Windows executable (.exe).
+  - Tested the code on the "Aristotelis" cluster for enhanced precision in the computed output.
 anchor: bachelor-thesis
 links:
   code: https://github.com/giannis93/Bachelor-thesis-prog
