@@ -7,8 +7,6 @@ location: Thessaloniki, Greece
 start: '2011'
 end: '2019'
 summary: Physics Department, School of Science.
-focus:
-  - 'Thesis: Study of Rotating Neutron Stars Using RNS Code'
 highlights:
   - Built a Python GUI for the RNS code and deployed the thesis simulations on an HPC cluster.
 keyCourses: []

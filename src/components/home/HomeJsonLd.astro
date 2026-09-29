@@ -28,9 +28,16 @@ const [education, experience] = await Promise.all([
   getCollection('experience'),
 ]);
 
-const alumniOf = [...new Set(education.map(({ data }) => data.institution).filter(known))].map(
-  (name) => ({ '@type': 'EducationalOrganization', name }),
-);
+// Degrees only: a language exam (level "other") does not make someone an alumnus.
+const degreeInstitutions = education
+  .filter(
+    ({ data }) => data.level === 'bachelor' || data.level === 'master' || data.level === 'phd',
+  )
+  .map(({ data }) => data.institution);
+const alumniOf = [...new Set(degreeInstitutions.filter(known))].map((name) => ({
+  '@type': 'EducationalOrganization',
+  name,
+}));
 
 const currentRole = sortByDateDesc(experience, (entry) => entry.data).find(
   ({ data }) => data.end === 'present' && known(data.role) && known(data.organisation),
