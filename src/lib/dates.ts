@@ -116,13 +116,16 @@ export interface Duration {
 
 /**
  * Inclusive duration between two dates (Jan–Mar = 3 months, LinkedIn-style).
- * Missing `end` means `present`. Returns `null` if either date is unknown or end < start.
+ * Missing `end` means `present`. Returns `null` if either date is unknown or end < start,
+ * and also when either end is year-only (`2015`–`2020` could be anything from 4 to 6
+ * years, so no duration is claimed; month precision is required on both ends).
  */
 export function duration(
   start: string | null | undefined,
   end: string | null | undefined = PRESENT,
   now: Date = new Date(),
 ): Duration | null {
+  if (parseDate(start).kind === 'year' || parseDate(end || PRESENT).kind === 'year') return null;
   const from = toMonthIndex(start, 'start', now);
   const to = toMonthIndex(end || PRESENT, 'end', now);
   if (from === null || to === null || to < from) return null;

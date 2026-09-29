@@ -1,6 +1,6 @@
 ---
 /**
- * HeroField: decorative background for the Home hero (aria-hidden, never content).
+ * HeroField: decorative background for the Home hero (the artwork is aria-hidden, never content).
  *
  * A lattice of particles resting on the graph-paper grid (--grid-size), displaced by two
  * coherent longitudinal waves from point sources, so the interference pattern appears as
@@ -11,6 +11,13 @@
  * - Motion: at most 30 fps, paused off-screen and in hidden tabs; a single static frame
  *   under prefers-reduced-motion. Survives <ClientRouter />: loops are torn down on
  *   `astro:before-swap` and re-mounted on `astro:page-load`.
+ * - Pause control (WCAG 2.2.2): a real <button> in the bottom-right corner, outside the
+ *   aria-hidden artwork, toggles "Pause/Play background animation". The choice is kept in
+ *   sessionStorage, so the field stays paused across page navigations. The button is
+ *   revealed by JS only (no JS = static lattice, nothing to pause) and hidden under
+ *   prefers-reduced-motion, where the field never moves and a Play control for a purely
+ *   decorative effect would only add a tab stop. With layout="fill" the field sits at
+ *   z-index -1: keep the corner clear of hero content so the button stays clickable.
  * - No JS / no canvas: a static CSS dot lattice (same grid) is shown instead.
  * - No layout shift: `layout="fill"` is absolutely positioned; `layout="box"` reserves a
  *   fixed aspect ratio. Hidden in print ([data-decorative]).
@@ -20,6 +27,7 @@
  *   <!-- as a visual block, e.g. in <PageHeader><Fragment slot="aside"> -->
  *   <HeroField layout="box" aspect="4 / 3" />
  */
+import { Icon } from 'astro-icon/components';
 import type { Tint } from '@/lib/site';
 
 interface Props {
@@ -44,9 +52,20 @@ const mask = Astro.props.mask ?? (layout === 'fill' ? 'edge' : 'radial');
   data-hero-field
   data-tint={tint}
   data-decorative
-  aria-hidden="true"
 >
-  <canvas class="hero-field__canvas"></canvas>
+  <div class="hero-field__art" aria-hidden="true">
+    <canvas class="hero-field__canvas"></canvas>
+  </div>
+  <button
+    type="button"
+    class="hero-field__toggle"
+    aria-label="Pause background animation"
+    title="Pause background animation"
+    hidden
+  >
+    <Icon name="lucide:pause" class="hero-field__icon hero-field__icon--pause" aria-hidden="true" />
+    <Icon name="lucide:play" class="hero-field__icon hero-field__icon--play" aria-hidden="true" />
+  </button>
 </div>
 
 <style>
@@ -54,7 +73,6 @@ const mask = Astro.props.mask ?? (layout === 'fill' ? 'edge' : 'radial');
     --hf-ink: var(--color-accent);
     --hf-opacity: 0.6;
     position: relative;
-    overflow: hidden;
     pointer-events: none;
     user-select: none;
     color: var(--hf-ink);
@@ -74,8 +92,15 @@ const mask = Astro.props.mask ?? (layout === 'fill' ? 'edge' : 'radial');
     width: 100%;
   }
 
+  /* The artwork layer carries the fade mask, so the pause button stays fully visible. */
+  .hero-field__art {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+  }
+
   /* Static fallback (no JS, no canvas, or until the first frame): a plain dot lattice. */
-  .hero-field::before {
+  .hero-field__art::before {
     content: '';
     position: absolute;
     inset: 0;
@@ -96,7 +121,7 @@ const mask = Astro.props.mask ?? (layout === 'fill' ? 'edge' : 'radial');
     transition: opacity var(--duration-slow) var(--ease-standard);
   }
 
-  .hero-field[data-ready]::before {
+  .hero-field[data-ready] .hero-field__art::before {
     opacity: 0;
   }
 
@@ -108,12 +133,18 @@ const mask = Astro.props.mask ?? (layout === 'fill' ? 'edge' : 'radial');
      Phones: the text covers the hero, so keep the field faint and in the top corner. */
   .hero-field--mask-edge {
     --hf-opacity: 0.4;
+  }
+
+  .hero-field--mask-edge > .hero-field__art {
     mask-image: radial-gradient(ellipse 110% 55% at 100% 0%, black 10%, transparent 100%);
   }
 
   @media (width >= 48rem) {
     .hero-field--mask-edge {
       --hf-opacity: 0.6;
+    }
+
+    .hero-field--mask-edge > .hero-field__art {
       mask-image:
         linear-gradient(to right, transparent 30%, black 80%),
         linear-gradient(to bottom, black 75%, transparent);
@@ -121,8 +152,52 @@ const mask = Astro.props.mask ?? (layout === 'fill' ? 'edge' : 'radial');
     }
   }
 
-  .hero-field--mask-radial {
+  .hero-field--mask-radial > .hero-field__art {
     mask-image: radial-gradient(closest-side, black 55%, transparent 100%);
+  }
+
+  /* Pause/play control (WCAG 2.2.2), inset so the focus ring is never clipped. */
+  .hero-field__toggle {
+    position: absolute;
+    inset-block-end: var(--space-xs);
+    inset-inline-end: var(--space-xs);
+    display: grid;
+    place-items: center;
+    width: var(--size-target);
+    height: var(--size-target);
+    padding: 0;
+    border: var(--rule-width) solid var(--color-border-strong);
+    border-radius: var(--radius-full);
+    background-color: var(--color-surface);
+    color: var(--color-muted);
+    pointer-events: auto;
+    cursor: pointer;
+    transition:
+      color var(--duration-fast) var(--ease-standard),
+      border-color var(--duration-fast) var(--ease-standard);
+
+    &:hover {
+      border-color: var(--color-foreground);
+      color: var(--color-foreground);
+    }
+
+    &:focus-visible {
+      border-radius: var(--radius-full);
+    }
+
+    &[hidden] {
+      display: none;
+    }
+  }
+
+  .hero-field__icon {
+    width: var(--size-icon-sm);
+    height: var(--size-icon-sm);
+  }
+
+  .hero-field[data-paused] .hero-field__icon--pause,
+  .hero-field:not([data-paused]) .hero-field__icon--play {
+    display: none;
   }
 </style>
 
@@ -143,10 +218,18 @@ const mask = Astro.props.mask ?? (layout === 'fill' ? 'edge' : 'radial');
   const FRAME_MS = 30; // ≈ 30 fps cap
   const LEVELS = 4; // alpha buckets (one fill per bucket)
   const wideMedia = window.matchMedia('(width >= 48rem)');
+  const KEY = 'hero-field-paused'; // sessionStorage: the user's pause choice (WCAG 2.2.2)
+  let paused = false;
+  try {
+    paused = sessionStorage.getItem(KEY) === '1';
+  } catch {
+    // Storage unavailable: start playing; the button still works for this page.
+  }
 
   function mount(el: HTMLElement): Field | undefined {
     const canvas = el.querySelector('canvas');
     const ctx = canvas?.getContext('2d');
+    const button = el.querySelector('button');
     if (!canvas || !ctx) return;
 
     let w = 0;
@@ -267,7 +350,7 @@ const mask = Astro.props.mask ?? (layout === 'fill' ? 'edge' : 'radial');
     };
 
     const update = (): void => {
-      const run = onScreen && !reduced.matches && !document.hidden;
+      const run = onScreen && !paused && !reduced.matches && !document.hidden;
       if (run && !raf) {
         last = performance.now();
         raf = requestAnimationFrame(frame);
@@ -275,6 +358,13 @@ const mask = Astro.props.mask ?? (layout === 'fill' ? 'edge' : 'radial');
         cancelAnimationFrame(raf);
         raf = 0;
       }
+      el.toggleAttribute('data-paused', paused);
+      if (!button) return;
+      const label = `${paused ? 'Play' : 'Pause'} background animation`;
+      button.setAttribute('aria-label', label);
+      button.title = label;
+      button.hidden = reduced.matches; // nothing moves under reduced motion: nothing to pause
+      button.onclick = toggle;
     };
 
     const recolor = (): void => {
@@ -293,6 +383,7 @@ const mask = Astro.props.mask ?? (layout === 'fill' ? 'edge' : 'radial');
     resize.observe(el);
     visibility.observe(el);
     color = getComputedStyle(canvas).color;
+    update();
 
     return {
       el,
@@ -309,6 +400,17 @@ const mask = Astro.props.mask ?? (layout === 'fill' ? 'edge' : 'radial');
 
   function each(fn: (field: Field) => void): void {
     fields.forEach(fn);
+  }
+
+  function toggle(): void {
+    paused = !paused;
+    try {
+      if (paused) sessionStorage.setItem(KEY, '1');
+      else sessionStorage.removeItem(KEY);
+    } catch {
+      // Storage unavailable: the choice lasts until the next page load.
+    }
+    each((field) => field.update());
   }
 
   function init(): void {

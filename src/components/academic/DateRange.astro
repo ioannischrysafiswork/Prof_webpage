@@ -1,7 +1,7 @@
 ---
 /**
  * `Sep 2019 – Jul 2023` with machine-readable <time> elements (mono).
- * Accepts ISO `YYYY-MM` / `YYYY`, `present`, or TODO placeholders (shown as-is in drafts).
+ * Accepts ISO `YYYY-MM` / `YYYY` or `present`; `TODO(ioannis)` placeholders are skipped.
  * A missing start shows the end date alone; equal dates collapse to one.
  */
 import { formatDate, toDateTimeAttr } from '@/lib/dates';

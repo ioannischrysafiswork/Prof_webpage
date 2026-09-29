@@ -1,7 +1,9 @@
 ---
 /**
  * Grid of curated projects for /work (#projects). Order: `order` ascending (curation),
- * then most recent first. 1 → 2 → 3 columns; two compact columns without thumbnails in print.
+ * then most recent first. 1 → 2 → 3 columns on screen. Print: a compact ledger, one entry
+ * per project (title and dates on one line, then the tagline and the repository URL);
+ * no card frames, thumbnails or stack chips.
  */
 import type { CollectionEntry } from 'astro:content';
 import { sortByDateDesc } from '@/lib/dates';
@@ -43,19 +45,47 @@ const projects = sortByDateDesc(entries, ({ data }) => data).sort(
 
   @media print {
     .projects {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: var(--print-gap);
+      grid-template-columns: minmax(0, 1fr);
+      gap: var(--space-sm);
     }
 
-    .projects :global(.card__media) {
+    .projects :global(.card) {
+      border: 0;
+      break-inside: avoid;
+    }
+
+    .projects :global(.card__media),
+    .projects :global(.chip-list) {
       display: none;
     }
 
     .projects :global(.card__content) {
-      gap: var(--space-2xs);
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: baseline;
+      gap: 0 var(--space-md);
+      padding: 0;
+    }
+
+    .projects :global(.card__title) {
+      font-size: var(--text-base);
+      line-height: var(--text-base--line-height);
+      font-weight: 600;
+    }
+
+    .projects :global(.card__meta) {
+      text-align: right;
+    }
+
+    .projects :global(.card__body),
+    .projects :global(.card__footer) {
+      grid-column: 1 / -1;
+      font-size: var(--text-sm);
+      line-height: var(--text-sm--line-height);
     }
 
     .projects :global(.card__footer) {
+      gap: 0 var(--space-md);
       padding-top: 0;
     }
 

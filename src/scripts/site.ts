@@ -6,7 +6,9 @@
  * - Theme toggle: [data-theme-toggle] buttons (aria-pressed = dark on), persisted in
  *   localStorage (try/catch). The initial theme is set by ThemeScript.astro in <head>.
  * - Mobile menu: [data-nav] with [data-nav-toggle] (aria-expanded). Escape closes and
- *   returns focus; clicking outside closes.
+ *   returns focus; clicking outside closes; keyboard focus leaving the menu (Tab past the
+ *   last link, Shift+Tab before the toggle) closes it without moving focus, so the open
+ *   panel can never cover the focused element (WCAG 2.4.11).
  * - Print: all <details> are opened before printing and restored afterwards.
  */
 
@@ -68,6 +70,16 @@ document.addEventListener('keydown', (event) => {
   if (!open) return;
   setMenu(open, false);
   open.querySelector<HTMLElement>('[data-nav-toggle]')?.focus();
+});
+
+/* Close the menu when focus moves to an element outside it. A null relatedTarget
+   (window blur, click on a non-focusable area) is ignored: clicks are handled above. */
+document.addEventListener('focusout', (event) => {
+  const from = event.target instanceof Element ? event.target : null;
+  const nav = from?.closest<HTMLElement>('[data-nav][data-open="true"]');
+  const next = event.relatedTarget;
+  if (!nav || !(next instanceof Node) || nav.contains(next)) return;
+  setMenu(nav, false);
 });
 
 // Sync now (the first astro:page-load can fire before this module runs) and after swaps.

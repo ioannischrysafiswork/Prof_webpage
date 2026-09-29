@@ -1,8 +1,12 @@
 ---
 /**
  * Certifications on /work: a ledger-style list (name, issuer, issue date, optional expiry,
- * credential ID and a "Verify" link), newest first. Two columns from 48rem; a compact
- * two-column block in print. Each item has a stable anchor `certification-<id>`.
+ * credential ID and a "Verify" link), newest first. Two columns from 48rem. Each item has
+ * a stable anchor `certification-<id>`.
+ *
+ * Print (CV): one line per certificate, "Name · Issuer · Date". Summaries, topic chips
+ * and verification links stay on screen only (long URLs would dominate a printed page);
+ * the credential ID prints only when it is short enough to read and type.
  */
 import type { CollectionEntry } from 'astro:content';
 import { Icon } from 'astro-icon/components';
@@ -17,6 +21,9 @@ interface Props {
 
 const { entries, headingLevel = 3 } = Astro.props;
 const Heading = `h${headingLevel}` as 'h3' | 'h4';
+
+/** Longer credential IDs (e.g. Udemy's 39-character UUIDs) are screen-only. */
+const PRINT_ID_MAX_LENGTH = 24;
 
 const items = sortByDateDesc(entries, ({ data }) => ({
   start: data.date,
@@ -34,6 +41,7 @@ const items = sortByDateDesc(entries, ({ data }) => ({
       ? { label: formatDate(data.expires), attr: toDateTimeAttr(data.expires) }
       : undefined,
     credentialId: data.credentialId?.trim() || undefined,
+    printId: (data.credentialId?.trim().length ?? 0) <= PRINT_ID_MAX_LENGTH,
     verify,
     others,
   };
@@ -73,11 +81,17 @@ const items = sortByDateDesc(entries, ({ data }) => ({
           items={item.data.tech}
           size="sm"
           label={hasValue(item.data.name) ? `Topics: ${item.data.name}` : 'Topics'}
+          class="cert__topics"
         />
         {(item.credentialId || item.verify || item.others.length > 0) && (
-          <p class="cert__footer">
+          <p
+            class:list={[
+              'cert__footer',
+              { 'cert__footer--print': item.credentialId && item.printId },
+            ]}
+          >
             {item.credentialId && (
-              <span class="cert__id">
+              <span class:list={['cert__id', { 'cert__id--screen': !item.printId }]}>
                 Credential ID <span class="cert__id-value">{item.credentialId}</span>
               </span>
             )}
@@ -206,13 +220,14 @@ const items = sortByDateDesc(entries, ({ data }) => ({
   }
 
   @media print {
+    /* One ledger line per certificate: name, then issuer and date in the right columns. */
     .certs {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      column-gap: var(--space-xl);
+      display: block;
     }
 
     .cert {
-      padding-block: var(--print-gap);
+      padding-block: var(--space-2xs);
+      border-top: 0;
       break-inside: avoid;
     }
 
@@ -220,15 +235,57 @@ const items = sortByDateDesc(entries, ({ data }) => ({
       display: none;
     }
 
-    .cert__icon {
+    .cert__body {
+      grid-template-columns: minmax(0, 1fr) auto auto;
+      align-items: baseline;
+      gap: 0 var(--space-md);
+    }
+
+    .cert__head {
+      display: contents;
+    }
+
+    .cert__name {
+      order: 1;
+      font-size: var(--text-sm);
+      line-height: var(--text-sm--line-height);
+      font-weight: 600;
+    }
+
+    .cert__issuer {
+      order: 2;
+      min-width: 6em; /* issuers line up across rows */
+      font-size: var(--text-sm);
+      font-weight: 400;
+    }
+
+    .cert__date {
+      order: 3;
+      min-width: 4.5em;
+      text-align: right;
+    }
+
+    .cert__meta {
+      order: 4;
+      grid-column: 1 / -1;
+    }
+
+    .cert__summary,
+    .cert__body :global(.cert__topics),
+    .cert__link,
+    .cert__id--screen {
       display: none;
     }
 
-    .cert__link {
-      display: inline;
-      min-height: auto;
-      font-family: var(--font-mono);
-      font-size: var(--text-xs);
+    .cert__footer {
+      display: none;
+    }
+
+    .cert__footer--print {
+      order: 5;
+      display: block;
+      grid-column: 1 / -1;
+      margin-top: 0;
     }
   }
 </style>

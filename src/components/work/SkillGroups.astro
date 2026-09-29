@@ -6,7 +6,8 @@
  * Optional "toolbox" row: logos of skills that define an Iconify `icon`
  * (e.g. simple-icons:python), each with an accessible name. Screen only.
  * Each group gets a stable sub-anchor `skills-<id>` (e.g. /work#skills-programming-languages).
- * Print: one line per group, "Group — Skill (context) · Skill …".
+ * Print: one compact line per group, "Group: Skill, Skill, …" (contexts are screen-only,
+ * so the printed CV stays within two pages).
  */
 import type { CollectionEntry } from 'astro:content';
 import { Icon } from 'astro-icon/components';
@@ -164,11 +165,10 @@ const toolbox = sorted
     }
 
     .skill-group {
-      display: grid;
-      grid-template-columns: var(--tl-date-col) minmax(0, 1fr);
-      column-gap: var(--tl-rail);
-      padding-block: var(--space-2xs);
+      padding-block: var(--space-2xs) 0;
       border-top: 0;
+      font-size: var(--text-sm);
+      line-height: var(--text-sm--line-height);
       break-inside: avoid;
     }
 
@@ -176,46 +176,42 @@ const toolbox = sorted
       display: none;
     }
 
-    .skill-group__title {
-      margin: 0;
-      font-size: var(--text-sm);
-      font-weight: 600;
-      text-align: right;
-    }
-
-    .skill-list {
-      display: block;
-      font-size: var(--text-sm);
-    }
-
+    .skill-group__title,
+    .skill-list,
     .skill,
     .skill--context {
       display: inline;
     }
 
+    .skill-group__title {
+      margin: 0;
+      font-size: inherit;
+      line-height: inherit;
+      font-weight: 600;
+    }
+
+    .skill-group__title::after {
+      content: ': ';
+    }
+
     .skill + .skill::before {
-      content: ' · ';
-      color: var(--color-muted);
+      content: ', ';
     }
 
     .skill :global(.chip) {
       display: inline;
       padding: 0;
       border: 0;
+      background: none;
+      font-family: inherit;
       font-size: inherit;
+      line-height: inherit;
+      color: inherit;
       white-space: normal;
     }
 
     .skill__context {
-      font-size: inherit;
-    }
-
-    .skill__context::before {
-      content: ' (';
-    }
-
-    .skill__context::after {
-      content: ')';
+      display: none;
     }
   }
 </style>

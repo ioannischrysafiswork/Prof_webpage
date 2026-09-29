@@ -17,6 +17,7 @@ import {
   dateRange,
   hasBody,
   present,
+  realItems,
   toLinks,
   workTypeLabel,
   type AcademicWorkEntry,
@@ -38,6 +39,9 @@ const meta = [data.course, data.institution, dateRange(data.start, data.end)]
   .filter(present)
   .join(' · ');
 const links = toLinks(data.links);
+const methods = realItems(data.methods);
+const tech = realItems(data.tech);
+const highlights = realItems(data.highlights);
 const figure = data.images[0];
 ---
 
@@ -59,16 +63,16 @@ const figure = data.images[0];
     />
   )}
 
-  <p class="aw-card__summary">{data.summary}</p>
+  {present(data.summary) && <p class="aw-card__summary">{data.summary}</p>}
 
-  {data.methods.length > 0 && (
+  {methods.length > 0 && (
     <p class="aw-card__methods">
-      <span class="aw-card__label">{data.methods.length > 1 ? 'Methods' : 'Method'}</span>
-      <span>{data.methods.join(' · ')}</span>
+      <span class="aw-card__label">{methods.length > 1 ? 'Methods' : 'Method'}</span>
+      <span>{methods.join(' · ')}</span>
     </p>
   )}
 
-  <Highlights items={data.highlights} label="Highlights" />
+  <Highlights items={highlights} label="Highlights" />
 
   {Content && (
     <details class="aw-card__more">
@@ -84,7 +88,7 @@ const figure = data.images[0];
   )}
 
   <Fragment slot="footer">
-    <ChipList items={data.tech} label="Tools" size="sm" />
+    <ChipList items={tech} label="Tools" size="sm" />
     <LinkRow links={links} label={`Links: ${data.title}`} />
   </Fragment>
 </Card>

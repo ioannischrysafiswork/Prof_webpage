@@ -4,7 +4,9 @@
  * get in touch (profile.yaml → contact, socials, cv), cross-links to all three areas,
  * and the last-updated date (build date).
  * `TODO(ioannis)` values are skipped here: placeholders belong in page content, not chrome.
- * In print only the contact block remains (with URLs), so printed CVs carry contact details.
+ * In print the name/contact/sections grid is hidden (the print masthead already carries
+ * name and contact details, so they are not printed twice); only a one-line meta row
+ * (copyright, last updated) remains.
  */
 import { Icon } from 'astro-icon/components';
 import { formatDate, isTodo } from '@/lib/dates';
@@ -114,7 +116,7 @@ const year = now.getFullYear();
       <p>
         Last updated <time datetime={updatedIso}>{updatedLabel}</time>
       </p>
-      <p>
+      <p data-print="hide">
         <a href="#main" class="site-footer__top">
           Back to top
           <Icon name="lucide:arrow-up" class="site-footer__icon" aria-hidden="true" />
@@ -259,5 +261,17 @@ const year = now.getFullYear();
 
   .site-footer__top:hover {
     color: var(--color-foreground);
+  }
+
+  @media print {
+    .site-footer {
+      border-top: none;
+      break-inside: avoid;
+    }
+
+    .site-footer__meta-inner {
+      justify-content: flex-start;
+      padding-block: var(--space-xs) 0;
+    }
   }
 </style>

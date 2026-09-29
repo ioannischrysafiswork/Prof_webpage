@@ -4,7 +4,10 @@
  * `src/content/theses/*.mdx`: facts (supervision, institution, dates, grade, methods,
  * tools), abstract, key figure, key result, highlights, the MDX body (may contain KaTeX
  * maths and science components) and a "Read the thesis (PDF)" link.
- * The page wraps it in a level-3 <Section as="article">.
+ * The page wraps it in a level-3 <Section as="article">. Only used for theses with a real
+ * title; any other field that is still a `TODO(ioannis)` placeholder is left out.
+ * Abstract / key result are plain labelled blocks (not landmarks), so the page does not
+ * repeat "Abstract" regions once per thesis.
  */
 import { render } from 'astro:content';
 import ChipList from '@/components/ui/ChipList.astro';
@@ -16,7 +19,15 @@ import FactList from './FactList.astro';
 import Highlights from './Highlights.astro';
 import KeyFigure from './KeyFigure.astro';
 import LinkRow from './LinkRow.astro';
-import { hasBody, hasText, paragraphs, present, toLinks, type ThesisEntry } from './academic';
+import {
+  hasBody,
+  hasText,
+  paragraphs,
+  present,
+  realItems,
+  toLinks,
+  type ThesisEntry,
+} from './academic';
 
 interface Props {
   entry: ThesisEntry;
@@ -33,22 +44,29 @@ const { Content } = hasBody(entry) ? await render(entry) : { Content: undefined 
 const pdf = hasText(data.links.pdf) ? toLinks({ pdf: data.links.pdf })[0] : undefined;
 const otherLinks = toLinks(data.links, {}, ['pdf']);
 const institution = [data.institution, data.department].filter(present).join(', ');
-const abstract = paragraphs(data.abstract);
+const abstract = present(data.abstract) ? paragraphs(data.abstract) : [];
+const hasDates = present(data.start) || present(data.end);
+const coSupervisors = realItems(data.coSupervisors);
+const methods = realItems(data.methods);
+const tech = realItems(data.tech);
+const highlights = realItems(data.highlights);
 const figure = data.images[0];
 ---
 
 <div class="thesis">
   <FactList label={`${data.title}: details`}>
-    <Fact label="Supervisor">{data.supervisor}</Fact>
-    {data.coSupervisors.length > 0 && (
-      <Fact label={data.coSupervisors.length > 1 ? 'Co-supervisors' : 'Co-supervisor'}>
-        {data.coSupervisors.join('; ')}
+    {present(data.supervisor) && <Fact label="Supervisor">{data.supervisor}</Fact>}
+    {coSupervisors.length > 0 && (
+      <Fact label={coSupervisors.length > 1 ? 'Co-supervisors' : 'Co-supervisor'}>
+        {coSupervisors.join('; ')}
       </Fact>
     )}
-    <Fact label="Institution">{institution}</Fact>
-    <Fact label={present(data.start) ? 'Period' : 'Completed'}>
-      <DateRange start={data.start} end={data.end} />
-    </Fact>
+    {institution && <Fact label="Institution">{institution}</Fact>}
+    {hasDates && (
+      <Fact label={present(data.start) ? 'Period' : 'Completed'}>
+        <DateRange start={data.start} end={data.end} />
+      </Fact>
+    )}
     {degree && (
       <Fact label="Degree">
         <a href={`#${degree.anchor}`} class="link">
@@ -57,43 +75,45 @@ const figure = data.images[0];
       </Fact>
     )}
     {present(data.grade) && <Fact label="Grade">{data.grade}</Fact>}
-    {data.methods.length > 0 && (
+    {methods.length > 0 && (
       <Fact label="Methods">
-        <ChipList items={data.methods} label="Methods" size="sm" variant="outline" />
+        <ChipList items={methods} label="Methods" size="sm" variant="outline" />
       </Fact>
     )}
-    {data.tech.length > 0 && (
+    {tech.length > 0 && (
       <Fact label="Tools">
-        <ChipList items={data.tech} label="Tools and software" size="sm" />
+        <ChipList items={tech} label="Tools and software" size="sm" />
       </Fact>
     )}
   </FactList>
 
-  <section class="thesis__block" aria-labelledby={`${anchor}-abstract`}>
-    <h4 id={`${anchor}-abstract`} class="thesis__label">
-      Abstract
-    </h4>
-    <div class="thesis__abstract">
-      {abstract.map((paragraph) => (
-        <p>{paragraph}</p>
-      ))}
+  {abstract.length > 0 && (
+    <div class="thesis__block">
+      <h4 id={`${anchor}-abstract`} class="thesis__label">
+        Abstract
+      </h4>
+      <div class="thesis__abstract">
+        {abstract.map((paragraph) => (
+          <p>{paragraph}</p>
+        ))}
+      </div>
     </div>
-  </section>
+  )}
 
   {present(data.keyResult) && (
-    <section class="thesis__block" aria-labelledby={`${anchor}-result`}>
+    <div class="thesis__block">
       <h4 id={`${anchor}-result`} class="thesis__label">
         Key result
       </h4>
       <p class="thesis__result">{data.keyResult}</p>
-    </section>
+    </div>
   )}
 
-  {(figure || data.highlights.length > 0 || Content || pdf || otherLinks.length > 0) && (
+  {(figure || highlights.length > 0 || Content || pdf || otherLinks.length > 0) && (
     <div class="thesis__indent">
       {figure && <KeyFigure image={figure} label={figure.caption ? 'Key figure.' : undefined} />}
 
-      <Highlights items={data.highlights} label="Highlights" />
+      <Highlights items={highlights} label="Highlights" />
 
       {Content && (
         <Prose class="thesis__body">

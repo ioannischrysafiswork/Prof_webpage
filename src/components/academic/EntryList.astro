@@ -3,7 +3,8 @@
  * Compact, CV-style list of dated entries (other qualifications, talks, posters…):
  * a mono date column aligned with the roadmap's date column, then title, organisation,
  * summary, highlights, chips and links. Lighter than the timeline: no rail, no toggles.
- * Pass an `empty` slot to show something when there are no items.
+ * Pass an `empty` slot to show something when there are no items. `TODO(ioannis)`
+ * placeholders in any text field are never rendered.
  */
 import { render } from 'astro:content';
 import ChipList from '@/components/ui/ChipList.astro';
@@ -12,7 +13,7 @@ import Prose from '@/components/ui/Prose.astro';
 import DateRange from './DateRange.astro';
 import Highlights from './Highlights.astro';
 import LinkRow from './LinkRow.astro';
-import { hasBody, present, type LabelledLink } from './academic';
+import { hasBody, present, realItems, type LabelledLink } from './academic';
 import type { CollectionEntry } from 'astro:content';
 
 export interface EntryItem {
@@ -75,14 +76,14 @@ const rendered = await Promise.all(
                 ))}
               </p>
             )}
-            {item.summary && <p class="entry__summary">{item.summary}</p>}
-            <Highlights items={item.highlights ?? []} label="Highlights" />
+            {present(item.summary) && <p class="entry__summary">{item.summary}</p>}
+            <Highlights items={realItems(item.highlights)} label="Highlights" />
             {Content && (
               <Prose>
                 <Content />
               </Prose>
             )}
-            <ChipList items={item.chips ?? []} label={item.chipsLabel} size="sm" />
+            <ChipList items={realItems(item.chips)} label={item.chipsLabel} size="sm" />
             <LinkRow links={item.links ?? []} label={`Links: ${item.title}`} />
           </div>
           {(present(item.start) || present(item.end)) && (

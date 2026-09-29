@@ -10,6 +10,11 @@
  *
  * All data comes from content collections (education, theses, academicWork, profile).
  * Zero page-specific JavaScript: the roadmap uses <details>, the project filter is CSS-only.
+ *
+ * The page is public: `TODO(ioannis)` placeholders are never rendered. Missing fields are
+ * left out; a thesis without a real title keeps its anchor but only says "Details to
+ * follow." (and is left out of the roadmap, the degree's thesis link and the printout);
+ * empty sections keep their anchor, show the same neutral line and do not print.
  */
 import { getCollection } from 'astro:content';
 import BaseLayout from '@/layouts/BaseLayout.astro';
@@ -27,11 +32,14 @@ import ThesisDetails from '@/components/academic/ThesisDetails.astro';
 import {
   DEGREE_LABEL,
   LEVEL_RANK,
+  PENDING_TEXT,
   THESIS_LABEL,
   hasMaths,
   hasText,
   isOtherWork,
+  isPublishedThesis,
   paragraphs,
+  realItems,
   toLinks,
   uniqueAnchors,
   workTypeLabel,
@@ -87,15 +95,18 @@ const thesisDates = (entry: ThesisEntry) => ({
 const sortedTheses = sortByDateAsc(theses, thesisDates).sort(byLevel);
 const thesisAnchors = uniqueAnchors(sortedTheses, (entry) => entry.data.anchor, usedIds);
 
+// Theses with a real title; the others keep their anchor but show no details yet.
+const publishedTheses = sortedTheses.filter(isPublishedThesis);
+
 // Cross-links: the first degree and the first thesis of the same level belong together.
 const thesisFor = (degree: EducationEntry) =>
-  sortedTheses.find((thesis) => thesis.data.level === degree.data.level);
+  publishedTheses.find((thesis) => thesis.data.level === degree.data.level);
 const degreeFor = (thesis: ThesisEntry) =>
   degrees.find((degree) => degree.data.level === thesis.data.level);
 
 /* ---------------------------------------------------------- Qualifications */
 const qualifications: EntryItem[] = sortByDateAsc(
-  education.filter((entry) => entry.data.level === 'other'),
+  education.filter((entry) => entry.data.level === 'other' && hasText(entry.data.degree)),
   (entry) => entry.data,
 ).map((entry) => ({
   key: entry.id,
@@ -114,11 +125,11 @@ const qualifications: EntryItem[] = sortByDateAsc(
 
 /* ----------------------------------------------------------- Academic work */
 const projects = sortByDateDesc(
-  academicWork.filter((entry) => !isOtherWork(entry)),
+  academicWork.filter((entry) => hasText(entry.data.title) && !isOtherWork(entry)),
   (entry) => entry.data,
 );
 const otherWork: EntryItem[] = sortByDateDesc(
-  academicWork.filter(isOtherWork),
+  academicWork.filter((entry) => hasText(entry.data.title) && isOtherWork(entry)),
   (entry) => entry.data,
 ).map((entry) => ({
   key: entry.id,
@@ -138,6 +149,7 @@ const otherWork: EntryItem[] = sortByDateDesc(
 
 /* ----------------------------------------------------------------- Roadmap */
 // Oldest → newest: the page reads as a journey (degrees, theses, qualifications).
+// Only real facts: placeholder dates, meta, highlights and tools are dropped.
 interface RoadmapItem {
   key: string;
   title: string;
@@ -153,32 +165,35 @@ interface RoadmapItem {
   anchor?: string;
   anchorLabel: string;
 }
+const real = (value: string | undefined) => (hasText(value) ? value : undefined);
 const roadmapSource: RoadmapItem[] = [
   ...education.map((entry) => ({
     key: `education-${entry.id}`,
-    title: entry.data.degree,
-    subtitle: entry.data.institution,
-    meta: [entry.data.location],
-    start: entry.data.start,
-    end: entry.data.end,
+    title: hasText(entry.data.degree) ? entry.data.degree : DEGREE_LABEL[entry.data.level],
+    subtitle: real(entry.data.institution),
+    meta: [real(entry.data.location)],
+    start: real(entry.data.start),
+    end: real(entry.data.end),
     order: entry.data.order,
     rank: LEVEL_RANK[entry.data.level] * 2,
-    summary: entry.data.summary,
-    highlights: entry.data.highlights,
-    tech: entry.data.tech,
+    summary: real(entry.data.summary),
+    highlights: realItems(entry.data.highlights),
+    tech: realItems(entry.data.tech),
     anchor: entry.data.level === 'other' ? 'qualifications' : degreeAnchors.get(entry),
     anchorLabel: entry.data.level === 'other' ? 'Other qualifications' : 'Degree details',
   })),
-  ...sortedTheses.map((entry) => ({
+  ...publishedTheses.map((entry) => ({
     key: `thesis-${entry.id}`,
     title: entry.data.title,
     subtitle: THESIS_LABEL[entry.data.level],
     meta: [hasText(entry.data.supervisor) ? `Supervisor: ${entry.data.supervisor}` : undefined],
-    ...thesisDates(entry),
+    start: real(entry.data.start ?? entry.data.end),
+    end: real(entry.data.end),
+    order: entry.data.order,
     rank: LEVEL_RANK[entry.data.level] * 2 + 1,
     summary: undefined,
     highlights: [],
-    tech: entry.data.tech,
+    tech: realItems(entry.data.tech),
     anchor: thesisAnchors.get(entry),
     anchorLabel: 'Thesis details',
   })),
@@ -198,6 +213,9 @@ const needsKatex = [...education, ...theses, ...academicWork].some((entry) => ha
 const intro = paragraphs(profile.intro.academic);
 const academicCv = hasText(profile.cv.academic) ? url(profile.cv.academic) : undefined;
 const seo = profile.seo.academic;
+
+/** `data-print` value that keeps a section without real content out of the printed CV. */
+const printIf = (hasContent: boolean) => (hasContent ? undefined : 'hide');
 ---
 
 <BaseLayout page="academic" path={PATH}>
@@ -272,130 +290,145 @@ const seo = profile.seo.academic;
   </div>
 
   <!-- 3. Degrees ---------------------------------------------------------- -->
-  <Section id="degrees" eyebrow="Education" title="Degrees">
-    {degrees.length === 0 && (
-      <p class="academic-todo">
-        TODO(ioannis): add your degrees to src/content/education/ (Bachelor's and Master's).
-      </p>
-    )}
-    {degrees.map((entry) => {
-      const anchor = degreeAnchors.get(entry) ?? `${entry.data.level}-degree`;
-      const thesis = thesisFor(entry);
-      return (
-        <Section
-          id={anchor}
-          as="article"
-          level={3}
-          eyebrow={DEGREE_LABEL[entry.data.level]}
-          title={entry.data.degree}
-          divider
-        >
-          <DegreeDetails
-            entry={entry}
-            thesis={
-              thesis
-                ? { title: thesis.data.title, anchor: thesisAnchors.get(thesis) ?? '' }
-                : undefined
-            }
-          />
-        </Section>
-      );
-    })}
-  </Section>
+  <div data-print={printIf(degrees.length > 0)}>
+    <Section id="degrees" eyebrow="Education" title="Degrees">
+      {degrees.length === 0 && <p class="academic-pending">{PENDING_TEXT}</p>}
+      {degrees.map((entry) => {
+        const anchor = degreeAnchors.get(entry) ?? `${entry.data.level}-degree`;
+        const thesis = thesisFor(entry);
+        return (
+          <Section
+            id={anchor}
+            as="article"
+            level={3}
+            eyebrow={DEGREE_LABEL[entry.data.level]}
+            title={hasText(entry.data.degree) ? entry.data.degree : DEGREE_LABEL[entry.data.level]}
+            divider
+          >
+            <DegreeDetails
+              entry={entry}
+              thesis={
+                thesis
+                  ? { title: thesis.data.title, anchor: thesisAnchors.get(thesis) ?? '' }
+                  : undefined
+              }
+            />
+          </Section>
+        );
+      })}
+    </Section>
+  </div>
 
   <!-- 4. Other qualifications --------------------------------------------- -->
-  <Section
-    id="qualifications"
-    eyebrow="Further study"
-    title="Other qualifications"
-    description="Schools, courses, languages and scholarships."
-  >
-    <EntryList items={qualifications} label="Other qualifications">
-      <p slot="empty" class="academic-todo">
-        TODO(ioannis): other qualifications (schools, courses, languages, scholarships), or confirm
-        there are none so this section can be removed.
-      </p>
-    </EntryList>
-  </Section>
+  <div data-print={printIf(qualifications.length > 0)}>
+    <Section
+      id="qualifications"
+      eyebrow="Further study"
+      title="Other qualifications"
+      description="Schools, courses, languages and scholarships."
+    >
+      <EntryList items={qualifications} label="Other qualifications">
+        <p slot="empty" class="academic-pending">
+          {PENDING_TEXT}
+        </p>
+      </EntryList>
+    </Section>
+  </div>
 
   <!-- 5. Theses ----------------------------------------------------------- -->
-  <Section id="theses" eyebrow="Research" title="Theses">
-    {sortedTheses.length === 0 && (
-      <p class="academic-todo">TODO(ioannis): add your theses to src/content/theses/.</p>
-    )}
-    {sortedTheses.map((entry) => {
-      const anchor = thesisAnchors.get(entry) ?? entry.data.anchor;
-      const degree = degreeFor(entry);
-      return (
-        <Section
-          id={anchor}
-          as="article"
-          level={3}
-          eyebrow={THESIS_LABEL[entry.data.level]}
-          title={entry.data.title}
-          divider
-        >
-          <ThesisDetails
-            entry={entry}
-            anchor={anchor}
-            degree={
-              degree
-                ? { title: degree.data.degree, anchor: degreeAnchors.get(degree) ?? '' }
-                : undefined
-            }
-          />
-        </Section>
-      );
-    })}
-  </Section>
+  <div data-print={printIf(publishedTheses.length > 0)}>
+    <Section id="theses" eyebrow="Research" title="Theses">
+      {sortedTheses.length === 0 && <p class="academic-pending">{PENDING_TEXT}</p>}
+      {sortedTheses.map((entry) => {
+        const anchor = thesisAnchors.get(entry) ?? entry.data.anchor;
+        if (!isPublishedThesis(entry)) {
+          // Anchor stays linkable; no placeholder text, and nothing to print yet.
+          return (
+            <div data-print="hide">
+              <Section
+                id={anchor}
+                as="article"
+                level={3}
+                title={THESIS_LABEL[entry.data.level]}
+                divider
+              >
+                <p class="academic-pending">{PENDING_TEXT}</p>
+              </Section>
+            </div>
+          );
+        }
+        const degree = degreeFor(entry);
+        return (
+          <Section
+            id={anchor}
+            as="article"
+            level={3}
+            eyebrow={THESIS_LABEL[entry.data.level]}
+            title={entry.data.title}
+            divider
+          >
+            <ThesisDetails
+              entry={entry}
+              anchor={anchor}
+              degree={
+                degree
+                  ? {
+                      title: hasText(degree.data.degree)
+                        ? degree.data.degree
+                        : DEGREE_LABEL[degree.data.level],
+                      anchor: degreeAnchors.get(degree) ?? '',
+                    }
+                  : undefined
+              }
+            />
+          </Section>
+        );
+      })}
+    </Section>
+  </div>
 
   <!-- 6. Academic work & simulations -------------------------------------- -->
-  <Section
-    id="projects"
-    eyebrow="Computation"
-    title="Projects & simulations"
-    description="Exercises, assignments, projects and simulations: the physical problem, the numerical method and the tools used."
-  >
-    {projects.length > 0 ? (
-      <AcademicWorkGrid entries={projects} label="Academic projects and simulations" />
-    ) : (
-      <p class="academic-todo">
-        TODO(ioannis): add exercises, assignments, projects or simulations to
-        src/content/academic-work/.
-      </p>
-    )}
-  </Section>
+  <div data-print={printIf(projects.length > 0)}>
+    <Section
+      id="projects"
+      eyebrow="Computation"
+      title="Projects & simulations"
+      description="Exercises, assignments, projects and simulations: the physical problem, the numerical method and the tools used."
+    >
+      {projects.length > 0 ? (
+        <AcademicWorkGrid entries={projects} label="Academic projects and simulations" />
+      ) : (
+        <p class="academic-pending">{PENDING_TEXT}</p>
+      )}
+    </Section>
+  </div>
 
-  <!-- 7. Other academic work ---------------------------------------------- -->
-  <Section
-    id="other"
-    eyebrow="Beyond coursework"
-    title="Other academic work"
-    description="Talks, posters, seminars and other academic activities."
-  >
-    <EntryList items={otherWork} label="Other academic work">
-      <p slot="empty" class="academic-todo">
-        TODO(ioannis): talks, posters, seminars or tutoring, or confirm there are none so this
-        section can be removed.
-      </p>
-    </EntryList>
-  </Section>
+  <!-- 7. Other academic work (talks, seminars… still to be provided) -------- -->
+  <div data-print={printIf(otherWork.length > 0)}>
+    <Section
+      id="other"
+      eyebrow="Beyond coursework"
+      title="Other academic work"
+      description="Talks, posters, seminars and other academic activities."
+    >
+      <EntryList items={otherWork} label="Other academic work">
+        <p slot="empty" class="academic-pending">
+          {PENDING_TEXT}
+        </p>
+      </EntryList>
+    </Section>
+  </div>
 </BaseLayout>
 
 <style>
-  /* Draft-only notes for data that does not exist yet (never CV data). */
-  .academic-todo {
+  /* Neutral public note for sections / entries whose details are not provided yet. */
+  .academic-pending {
     max-width: var(--container-measure);
-    padding: var(--space-sm) var(--space-md);
-    border: var(--rule-width) dashed var(--color-border-strong);
-    border-radius: var(--radius-sm);
-    font-family: var(--font-mono);
-    font-size: var(--text-sm);
     color: var(--color-muted);
   }
 
   @media print {
-    .academic-todo {
+    .academic-pending {
       display: none;
     }
   }

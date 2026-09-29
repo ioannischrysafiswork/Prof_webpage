@@ -3,7 +3,8 @@
  * Body of one degree on /academic (#bachelor-degree, #master-degree): summary, CV-style
  * facts (institution, location, period, focus, grade, key courses, thesis, documents),
  * highlights and the entry's Markdown body. The page wraps it in a level-3 <Section>.
- * Everything comes from `src/content/education/*.md`; missing optional fields are skipped.
+ * Everything comes from `src/content/education/*.md`; missing optional fields and
+ * `TODO(ioannis)` placeholders are skipped.
  */
 import { render } from 'astro:content';
 import ChipList from '@/components/ui/ChipList.astro';
@@ -14,7 +15,7 @@ import FactList from './FactList.astro';
 import Highlights from './Highlights.astro';
 import KeyFigure from './KeyFigure.astro';
 import LinkRow from './LinkRow.astro';
-import { hasBody, present, toLinks, type EducationEntry } from './academic';
+import { hasBody, present, realItems, toLinks, type EducationEntry } from './academic';
 
 interface Props {
   entry: EducationEntry;
@@ -27,29 +28,33 @@ const { data } = entry;
 const { Content } = hasBody(entry) ? await render(entry) : { Content: undefined };
 const links = toLinks(data.links, { pdf: 'Diploma / transcript (PDF)' });
 const dates = [data.start, data.end].filter(present);
+const focus = realItems(data.focus);
+const keyCourses = realItems(data.keyCourses);
+const tech = realItems(data.tech);
+const highlights = realItems(data.highlights);
 ---
 
 <div class="degree">
-  {data.summary && <p class="degree__summary">{data.summary}</p>}
+  {present(data.summary) && <p class="degree__summary">{data.summary}</p>}
 
   <FactList label={`${data.degree}: details`}>
-    <Fact label="Institution">{data.institution}</Fact>
+    {present(data.institution) && <Fact label="Institution">{data.institution}</Fact>}
     {present(data.location) && <Fact label="Location">{data.location}</Fact>}
     {dates.length > 0 && (
       <Fact label="Period">
         <DateRange start={data.start} end={data.end} />
       </Fact>
     )}
-    {data.focus.length > 0 && (
+    {focus.length > 0 && (
       <Fact label="Focus">
-        <ChipList items={data.focus} label="Specialisation and focus" size="sm" />
+        <ChipList items={focus} label="Specialisation and focus" size="sm" />
       </Fact>
     )}
     {present(data.grade) && <Fact label="Grade">{data.grade}</Fact>}
-    {data.keyCourses.length > 0 && (
+    {keyCourses.length > 0 && (
       <Fact label="Key courses">
         <ul class="degree__courses">
-          {data.keyCourses.map((course) => (
+          {keyCourses.map((course) => (
             <li>{course}</li>
           ))}
         </ul>
@@ -62,9 +67,9 @@ const dates = [data.start, data.end].filter(present);
         </a>
       </Fact>
     )}
-    {data.tech.length > 0 && (
+    {tech.length > 0 && (
       <Fact label="Tools">
-        <ChipList items={data.tech} label="Tools used during the degree" size="sm" />
+        <ChipList items={tech} label="Tools used during the degree" size="sm" />
       </Fact>
     )}
     {links.length > 0 && (
@@ -74,9 +79,9 @@ const dates = [data.start, data.end].filter(present);
     )}
   </FactList>
 
-  {(data.highlights.length > 0 || data.images[0] || Content) && (
+  {(highlights.length > 0 || data.images[0] || Content) && (
     <div class="degree__indent">
-      <Highlights items={data.highlights} label="Highlights" />
+      <Highlights items={highlights} label="Highlights" />
 
       {data.images[0] && <KeyFigure image={data.images[0]} />}
 

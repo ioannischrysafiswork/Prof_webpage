@@ -21,9 +21,11 @@
 
 /* Self-hosted variable fonts (Fontsource) — no third-party requests. Browsers only
    download a file when a glyph in its unicode-range is actually rendered.
-   Newsreader upright includes the optical-size axis (refined display cuts for headings);
-   italic uses the lighter weight-only file (rarely used: quotes, emphasis). */
-@import '@fontsource-variable/newsreader/opsz.css';
+   Newsreader uses the weight-only axis files (latin upright ~57 KB vs ~129 KB with the
+   optical-size axis) — a performance budget choice (mobile LCP); italic is only fetched
+   where italic text renders (quotes, emphasis). Only Inter (body text, the LCP element
+   on every page) is preloaded in BaseLayout. */
+@import '@fontsource-variable/newsreader/wght.css';
 @import '@fontsource-variable/newsreader/wght-italic.css';
 @import '@fontsource-variable/inter';
 @import '@fontsource-variable/jetbrains-mono';
@@ -797,10 +799,11 @@
     line-height: var(--leading-body);
   }
 
-  /* Chrome, controls and decoration. */
+  /* Chrome, controls and decoration. The footer's name/contact/sections grid is
+     hidden: the print masthead (PrintMasthead.astro) already carries name and contact,
+     so only the one-line footer meta (copyright, last updated) prints. */
   .site-header,
-  .site-footer__sections,
-  .site-footer__meta,
+  .site-footer__grid,
   .theme-toggle,
   .nav-toggle,
   .heading-anchor,

@@ -24,9 +24,25 @@ export function hasText(value: string | null | undefined): value is string {
   return typeof value === 'string' && value.trim() !== '' && !isTodo(value);
 }
 
-/** True for any non-empty text, including `TODO(ioannis)` placeholders (shown in drafts). */
+/**
+ * True for text that may be rendered. The site is public, so `TODO(ioannis)` placeholders
+ * are never shown: they count as missing (same rule as `hasText`).
+ */
 export function present(value: string | null | undefined): value is string {
-  return typeof value === 'string' && value.trim() !== '';
+  return hasText(value);
+}
+
+/** Only the real, non-placeholder strings of a list. */
+export function realItems(items: readonly (string | null | undefined)[] = []): string[] {
+  return items.filter(hasText);
+}
+
+/** Neutral public text for a section or entry whose details are not provided yet. */
+export const PENDING_TEXT = 'Details to follow.';
+
+/** A thesis is published once its title is real; otherwise only its anchor is kept. */
+export function isPublishedThesis(entry: ThesisEntry): boolean {
+  return hasText(entry.data.title);
 }
 
 /** Order of academic levels on the page: Bachelor → Master → PhD → other. */
@@ -76,9 +92,9 @@ export function toLinks(
     }));
 }
 
-/** `Mar 2024 – Jul 2026`, or the single date / placeholder that is known. */
+/** `Mar 2024 – Jul 2026`, or the single date that is known ('' if none). */
 export function dateRange(start?: string | null, end?: string | null): string {
-  if (present(start)) return formatRange(start, end);
+  if (present(start)) return formatRange(start, present(end) ? end : undefined);
   return present(end) ? formatRange(end) : '';
 }
 
@@ -150,13 +166,13 @@ export function workType(entry: AcademicWorkEntry): WorkType | undefined {
   return isTodo(type) ? undefined : (type as WorkType);
 }
 
-/** Display label for an entry's type (placeholder text is kept visible in drafts). */
-export function workTypeLabel(entry: AcademicWorkEntry): string {
+/** Display label for an entry's type, or `undefined` while the type is a placeholder. */
+export function workTypeLabel(entry: AcademicWorkEntry): string | undefined {
   const type = workType(entry);
-  return type ? WORK_TYPE_LABEL[type] : entry.data.type;
+  return type ? WORK_TYPE_LABEL[type] : undefined;
 }
 
-/** Placeholder-typed entries stay in #projects so they remain visible while drafting. */
+/** Placeholder-typed entries are listed under #projects (without a type badge). */
 export function isOtherWork(entry: AcademicWorkEntry): boolean {
   const type = workType(entry);
   return type !== undefined && (OTHER_TYPES as readonly string[]).includes(type);
