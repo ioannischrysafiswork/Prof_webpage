@@ -30,6 +30,8 @@ interface Props {
   headingLevel?: 2 | 3 | 4;
   /** Organisation / institution. */
   subtitle?: string;
+  /** Optional final href for the subtitle (e.g. organisation website; wrap internal paths in url()). */
+  subtitleHref?: string;
   /** Extra facts after the subtitle, e.g. [location, employmentType]. Empty values are skipped. */
   meta?: readonly (string | null | undefined)[];
   /** ISO `YYYY-MM` / `YYYY`, or a TODO placeholder. */
@@ -59,6 +61,7 @@ const {
   title,
   headingLevel = 3,
   subtitle,
+  subtitleHref,
   meta = [],
   start,
   end,
@@ -102,7 +105,18 @@ const printUrl = (href: string) => (/^https?:/i.test(href) ? undefined : absolut
     <Heading class="tl-title">{title}</Heading>
     {(subtitle || metaItems.length > 0) && (
       <p class="tl-sub">
-        {subtitle && <span class="tl-org">{subtitle}</span>}
+        {subtitle &&
+          (subtitleHref ? (
+            <a
+              class="tl-org"
+              href={subtitleHref}
+              rel={/^https?:/.test(subtitleHref) ? 'noopener' : undefined}
+            >
+              {subtitle}
+            </a>
+          ) : (
+            <span class="tl-org">{subtitle}</span>
+          ))}
         {metaItems.map((item) => (
           <span class="tl-meta">{item}</span>
         ))}

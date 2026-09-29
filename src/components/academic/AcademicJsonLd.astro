@@ -4,10 +4,19 @@
  * (institutions), `hasCredential` (EducationalOccupationalCredential per degree) and the
  * theses as `Thesis` items. Built only from content; any field that is still a
  * `TODO(ioannis)` placeholder is left out, so structured data never carries drafts.
- * Place it in BaseLayout's `head` slot.
+ * Place it in BaseLayout's `head` slot. Shared Person fields and helpers come from
+ * `src/lib/jsonld.ts`.
  */
 import { hasText, DEGREE_LABEL, type EducationEntry, type ThesisEntry } from './academic';
 import { toDateTimeAttr } from '@/lib/dates';
+import {
+  basePerson,
+  compact as clean,
+  personId,
+  profilePageId,
+  serializeJsonLd,
+  type Json,
+} from '@/lib/jsonld';
 import type { Profile } from '@/lib/profile';
 import { absoluteUrl } from '@/lib/url';
 
@@ -24,15 +33,7 @@ interface Props {
 
 const { profile, degrees, theses, path, title, description } = Astro.props;
 
-type Json = Record<string, unknown>;
 const pageUrl = absoluteUrl(path);
-const personId = `${absoluteUrl('/')}#person`;
-const clean = (value: Json): Json =>
-  Object.fromEntries(
-    Object.entries(value).filter(
-      ([, v]) => v !== undefined && v !== null && !(Array.isArray(v) && v.length === 0),
-    ),
-  );
 const organisation = (name: string, location?: string): Json =>
   clean({
     '@type': 'EducationalOrganization',
@@ -79,7 +80,7 @@ const thesisItems = theses
       '@id': `${pageUrl}#${anchor}`,
       name: data.title,
       headline: data.title,
-      author: { '@id': personId },
+      author: { '@id': personId() },
       abstract: hasText(data.abstract) ? data.abstract : undefined,
       datePublished: isoDate(data.end),
       inSupportOf:
@@ -96,16 +97,8 @@ const thesisItems = theses
     });
   });
 
-const sameAs = profile.socials.map((social) => social.url).filter((link) => /^https?:/.test(link));
-
 const person = clean({
-  '@type': 'Person',
-  '@id': personId,
-  name: profile.name,
-  url: absoluteUrl('/'),
-  description: hasText(profile.headline) ? profile.headline : undefined,
-  email: hasText(profile.contact.email) ? `mailto:${profile.contact.email}` : undefined,
-  sameAs,
+  ...basePerson(profile),
   alumniOf: [...institutions.values()],
   hasCredential: credentials,
 });
@@ -115,12 +108,12 @@ const graph = {
   '@graph': [
     clean({
       '@type': 'ProfilePage',
-      '@id': pageUrl,
+      '@id': profilePageId(path),
       url: pageUrl,
       name: title,
       description,
       inLanguage: 'en',
-      mainEntity: { '@id': personId },
+      mainEntity: { '@id': personId() },
       hasPart: thesisItems.map((item) => ({ '@id': item['@id'] })),
     }),
     person,
@@ -128,8 +121,7 @@ const graph = {
   ],
 };
 
-// Escape "<" so the JSON can never close the <script> element early.
-const json = JSON.stringify(graph).replace(/</g, '\\u003c');
+const json = serializeJsonLd(graph);
 ---
 
 <script is:inline type="application/ld+json" set:html={json} />

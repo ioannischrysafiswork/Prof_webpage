@@ -865,8 +865,9 @@
     display: contents;
   }
 
+  /* !important: component-scoped summary styles must not bring toggles back in print. */
   details > summary {
-    display: none;
+    display: none !important;
   }
 
   /* Show where links go. Internal links opt in with data-print-url="<absolute URL>";

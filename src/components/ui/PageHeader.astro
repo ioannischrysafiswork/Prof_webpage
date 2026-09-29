@@ -41,7 +41,11 @@ const hasAside = Astro.slots.has('aside');
   {grid && <div class="page-header__grid bg-grid" aria-hidden="true" data-decorative />}
   <div class="page-header__inner container-page">
     <div class="page-header__main">
-      {eyebrow && <Eyebrow>{eyebrow}</Eyebrow>}
+      {eyebrow && (
+        <div class="page-header__eyebrow">
+          <Eyebrow>{eyebrow}</Eyebrow>
+        </div>
+      )}
       <h1 id={`${id}-title`} class="page-header__title">
         {title}
       </h1>
@@ -131,7 +135,10 @@ const hasAside = Astro.slots.has('aside');
       padding-block: 0 var(--print-gap);
     }
 
-    .page-header__grid {
+    /* The print masthead already carries name and headline. */
+    .page-header__grid,
+    .page-header__eyebrow,
+    .page-header__lede {
       display: none;
     }
 

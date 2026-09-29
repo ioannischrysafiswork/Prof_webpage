@@ -3,7 +3,7 @@
  * One role on the /work timeline: a <TimelineItem> fed from an `experience` entry.
  * Details (highlights, tech, links, Markdown body) are always shown on /work
  * (`collapsible={false}`) so recruiters and printed CVs see everything at once.
- * The organisation's website (links.website) is listed first among the item links.
+ * The organisation's website (links.website) links the organisation name itself.
  */
 import { render, type CollectionEntry } from 'astro:content';
 import TimelineItem from '@/components/timeline/TimelineItem.astro';
@@ -18,11 +18,17 @@ interface Props {
 const { entry, headingLevel = 3 } = Astro.props;
 const { data } = entry;
 
-const links = resolveLinks(data.links, {
-  labels: {
-    website: hasValue(data.organisation) ? `${data.organisation} website` : undefined,
-  },
-}).map(({ label, href }) => ({ label, href }));
+const websiteLabel = '__organisation-website__';
+const resolved = resolveLinks(data.links, { labels: { website: websiteLabel } });
+const website = hasValue(data.organisation)
+  ? resolved.find(({ label }) => label === websiteLabel)?.href
+  : undefined;
+const links = resolved
+  .filter(({ label }) => label !== websiteLabel || !website)
+  .map(({ label, href }) => ({
+    label: label === websiteLabel ? 'Organisation website' : label,
+    href,
+  }));
 
 // Render the Markdown body only when there is one, so empty entries add no empty block.
 const hasBody = Boolean(entry.body?.trim());
@@ -31,6 +37,7 @@ const Content = hasBody ? (await render(entry)).Content : undefined;
 const item = {
   title: data.role,
   subtitle: data.organisation,
+  subtitleHref: website,
   meta: [data.location, data.employmentType],
   start: data.start,
   end: data.end,

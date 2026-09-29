@@ -44,7 +44,9 @@ const {
     color: var(--color-foreground);
     font-size: var(--text-sm);
     line-height: var(--text-sm--line-height);
-    white-space: nowrap;
+    /* Short labels stay on one line; long ones wrap instead of overflowing on phones. */
+    max-width: 100%;
+    overflow-wrap: anywhere;
   }
 
   .chip--md {

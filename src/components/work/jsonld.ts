@@ -3,17 +3,14 @@
  * current roles (`hasOccupation`, `worksFor`), certifications (`hasCredential`) and
  * skills (`knowsAbout`). Built only from content collections; placeholders are omitted,
  * so the markup never states anything that is not in the content files.
- *
- * NOTE: page-local on purpose (file ownership). The Person part should move to a shared
- * `src/lib/jsonld.ts` so Home and Academic describe the same Person (same `@id`).
+ * The shared Person fields and helpers come from `src/lib/jsonld.ts`.
  */
 import type { CollectionEntry } from 'astro:content';
 import { parseDate, toDateTimeAttr } from '@/lib/dates';
 import type { Profile } from '@/lib/profile';
+import { basePerson, compact, profilePageId, type Json } from '@/lib/jsonld';
 import { absoluteUrl } from '@/lib/url';
 import { hasValue } from './links';
-
-type Json = Record<string, unknown>;
 
 interface WorkJsonLdInput {
   profile: Profile;
@@ -26,23 +23,9 @@ interface WorkJsonLdInput {
   skills: readonly CollectionEntry<'skills'>[];
 }
 
-/** Drop undefined values and empty arrays so the output stays minimal. */
-function compact(object: Json): Json {
-  return Object.fromEntries(
-    Object.entries(object).filter(
-      ([, value]) => value !== undefined && !(Array.isArray(value) && value.length === 0),
-    ),
-  );
-}
-
 /** Absolute URL for a content link, or undefined for placeholders. */
 function linkUrl(value: string | undefined): string | undefined {
   return hasValue(value) ? absoluteUrl(value) : undefined;
-}
-
-/** Shared identifier of the Person node across pages. */
-export function personId(): string {
-  return `${absoluteUrl('/')}#person`;
 }
 
 export function workJsonLd(input: WorkJsonLdInput): Json {
@@ -96,21 +79,9 @@ export function workJsonLd(input: WorkJsonLdInput): Json {
     ...new Set(skills.flatMap(({ data }) => data.items.map((item) => item.name)).filter(hasValue)),
   ];
 
-  const sameAs = profile.socials.map((social) => linkUrl(social.url)).filter(hasValue);
-  const email = hasValue(profile.contact.email) ? `mailto:${profile.contact.email}` : undefined;
-  const firstRole = current[0]?.data.role;
-
   const person = compact({
-    '@type': 'Person',
-    '@id': personId(),
-    name: profile.name,
-    url: absoluteUrl('/'),
-    jobTitle: firstRole,
-    email,
-    homeLocation: hasValue(profile.location)
-      ? { '@type': 'Place', name: profile.location }
-      : undefined,
-    sameAs,
+    ...basePerson(profile),
+    jobTitle: current[0]?.data.role,
     worksFor: [...organisations.values()],
     hasOccupation: occupations,
     hasCredential: credentials,
@@ -121,16 +92,11 @@ export function workJsonLd(input: WorkJsonLdInput): Json {
   return {
     '@context': 'https://schema.org',
     '@type': 'ProfilePage',
-    '@id': `${pageUrl}#profilepage`,
+    '@id': profilePageId(path),
     url: pageUrl,
     name: title,
     description,
     inLanguage: 'en',
     mainEntity: person,
   };
-}
-
-/** Serialise for an inline <script type="application/ld+json"> (no `</script>` breakout). */
-export function serializeJsonLd(data: Json): string {
-  return JSON.stringify(data).replace(/</g, '\\u003c');
 }
