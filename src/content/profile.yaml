@@ -2,23 +2,23 @@
 # Only verified facts or TODO(ioannis) placeholders. Schema: src/content.config.ts (profile).
 # Sources: source-material/cv-2025-08-17.pdf, certificates, Ioannis's answers (see _inventory.md).
 
-# The CV uses "Giannis Chrysafis"; certificates and this site use "Ioannis" (to be confirmed).
+# The CV uses "Giannis"; Ioannis chose "Ioannis Chrysafis" for the site (2026-09-29).
 name: Ioannis Chrysafis
-# DRAFT headline (from the CV profile + certificates), awaiting approval by Ioannis.
-headline: Oracle SQL and PL/SQL · cloud data and reporting · MSc in Computational Physics
-# From the CV header (Aug 2025); confirm it is still what you want shown.
+# Approved by Ioannis (2026-09-29).
+headline: Oracle PL/SQL & Cloud Integration Developer · MSc in Computational Physics
+# Confirmed by Ioannis (2026-09-29).
 location: Thessaloniki, Greece
 
 # 4–5 line first-person intros. Written with the write-intros skill; approved by Ioannis.
 # Variant A of each is stored here; both variants are in source-material/_intro-drafts.md.
 intro:
-  home: "I came to data and software through physics. At Aristotle University of Thessaloniki I studied computational physics, and my Bachelor's thesis took me from rotating neutron stars to writing a Python interface for the RNS code and running it on the university's HPC cluster. Between 2015 and 2020 I also tutored high-school students in physics, helping them prepare for their exams. I keep learning alongside my work: over the past year I have completed courses on Oracle database architecture, PL/SQL, SQL performance tuning and Claude Code."
+  home: "I came to data and software through physics. At Aristotle University of Thessaloniki I studied computational physics, and my Bachelor's thesis took me from rotating neutron stars to writing a Python interface for the RNS code and running it on the university's HPC cluster. Between 2015 and 2020 I also tutored high-school students in physics, helping them prepare for their exams. I keep learning alongside my work: over the past year I have completed courses on Oracle database architecture, PL/SQL, SQL performance tuning and Claude Code. Away from the screen, I play basketball, train in boxing and read."
   work: 'My work sits where data, reporting and integration meet. At Deloitte I built and maintained BI Publisher reports for Oracle HCM Cloud, optimised complex SQL and PL/SQL, ran SFTP/FTP file pipelines and worked with colleagues on Oracle Integration Cloud workflows. Moving from computational physics into enterprise data, and now to Netcompany-Intrasoft, has meant learning new systems and settling into new teams quickly. I keep investing in the fundamentals, most recently Oracle database architecture, PL/SQL and SQL performance tuning.'
   academic: "Computational physics has been the thread of my studies at Aristotle University of Thessaloniki, through a Bachelor's and a Master's degree. My Bachelor's thesis studied rotating neutron stars with the RNS code: I wrote a Python GUI to configure, run and plot the models, and deployed the simulations on the university's HPC cluster. The Master's took me into simulations in electromagnetics, quantum mechanics and materials, using numerical methods, OpenMP, Python and MATLAB. What draws me is using computation to make physical problems understandable."
 introStatus:
-  home: draft
-  work: draft
-  academic: draft
+  home: draft # variant A approved; the closing hobbies sentence is new and awaits approval
+  work: approved
+  academic: approved
 
 # Per-page <title> and meta description. Neutral wording until the intros are approved.
 seo:
@@ -34,17 +34,23 @@ seo:
 
 # Only contact details explicitly approved by Ioannis are published.
 # Phone number, home address, date of birth and the CV's personal email are deliberately omitted.
-contact: {}
-# contact:
-#   email: 'TODO(ioannis): approve the public contact email'
+# Approved for public display by Ioannis (2026-09-29).
+contact:
+  email: ioannischrysafiswork@gmail.com
 
 socials:
   - label: GitHub
     url: https://github.com/ioannischrysafiswork
     icon: simple-icons:github
     handle: ioannischrysafiswork
-# Other profile URLs from the CV are listed in source-material/_inventory.md (private).
-# TODO(ioannis): approve LinkedIn / second GitHub / ORCID / Google Scholar, if wanted
+  - label: LinkedIn
+    url: https://www.linkedin.com/in/giannis-chrysafis
+    icon: simple-icons:linkedin
+    handle: giannis-chrysafis
+  - label: GitHub (earlier projects)
+    url: https://github.com/giannis93
+    icon: simple-icons:github
+    handle: giannis93
 
 # Downloadable CVs (public/documents/), produced by the export-cv-pdf skill.
 cv: {}

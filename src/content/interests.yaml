@@ -1,7 +1,19 @@
 # Hobbies and interests for the Home page. Only what Ioannis tells us — never invented.
+# Source: Ioannis (direct answer, 2026-09-29): sports/fitness, basketball, boxing, reading.
 # Schema: src/content.config.ts (interests).
 
-- id: todo-interest
-  name: 'TODO(ioannis): a hobby or interest'
-  note: 'TODO(ioannis): a short personal phrase about it, in your own words'
+- id: basketball
+  name: Basketball
   order: 1
+
+- id: boxing
+  name: Boxing
+  order: 2
+
+- id: fitness
+  name: Sports and fitness
+  order: 3
+
+- id: reading
+  name: Reading
+  order: 4
