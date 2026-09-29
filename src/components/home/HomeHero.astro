@@ -1,0 +1,93 @@
+---
+/**
+ * Home hero (`#about`): name (the page's only <h1>), headline, the 4–5 line personal
+ * intro from profile.yaml → intro.home, and quick links to the two other areas so the
+ * three-area structure is clear in the first viewport.
+ *
+ * The aside holds the optional portrait (profile.photo) and the decorative physics
+ * visual from science-visuals (HeroField). Nothing here is wrapped in <Reveal>: this is
+ * above the fold and contains the LCP element.
+ */
+import { Picture } from 'astro:assets';
+import PageHeader from '@/components/ui/PageHeader.astro';
+import LinkButton from '@/components/ui/LinkButton.astro';
+import type { Profile } from '@/lib/profile';
+import { NAV } from '@/lib/site';
+import { url } from '@/lib/url';
+
+interface Props {
+  profile: Profile;
+}
+
+const { profile } = Astro.props;
+
+/** Blank lines in the YAML intro become separate paragraphs. */
+const paragraphs = profile.intro.home
+  .split(/\n\s*\n/)
+  .map((paragraph) => paragraph.trim())
+  .filter(Boolean);
+
+const areas = NAV.filter((item) => item.key !== 'home');
+---
+
+<PageHeader id="about" title={profile.name} lede={profile.headline} class="home-hero">
+  {paragraphs.map((paragraph) => (
+    <p>{paragraph}</p>
+  ))}
+
+  <Fragment slot="actions">
+    {areas.map((item) => (
+      <LinkButton
+        href={url(item.path)}
+        icon="lucide:arrow-right"
+        data-tint={item.key}
+        printUrl={false}
+      >
+        {item.label}
+      </LinkButton>
+    ))}
+  </Fragment>
+
+  <div slot="aside" class="home-hero__visual">
+    <!-- HeroField from science-visuals goes here (decorative, aria-hidden, reduced-motion aware) -->
+    {profile.photo && (
+      <Picture
+        src={profile.photo.src}
+        alt={profile.photo.alt}
+        formats={['avif', 'webp']}
+        widths={[240, 360, 480, 720]}
+        sizes="(min-width: 64rem) 22rem, 60vw"
+        loading="eager"
+        fetchpriority="high"
+        class="home-hero__portrait"
+      />
+    )}
+  </div>
+</PageHeader>
+
+<style>
+  .home-hero__visual {
+    position: relative;
+    display: grid;
+    place-items: center;
+  }
+
+  /* Nothing to show yet (no portrait, no HeroField): take no space on small screens. */
+  .home-hero__visual:empty {
+    display: none;
+  }
+
+  .home-hero__visual :global(.home-hero__portrait) {
+    width: min(100%, 22rem);
+    height: auto;
+    border: var(--rule-width) solid var(--color-border);
+    border-radius: var(--radius-lg);
+    background-color: var(--color-sunken);
+  }
+
+  @media print {
+    .home-hero__visual {
+      display: none;
+    }
+  }
+</style>

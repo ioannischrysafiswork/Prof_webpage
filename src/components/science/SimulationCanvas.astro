@@ -1,0 +1,357 @@
+---
+/**
+ * SimulationCanvas: a lazily mounted <canvas> for small interactive demos of simulations
+ * Ioannis actually worked on. Vanilla TS, no framework runtime.
+ *
+ * - The simulation module (`src/components/science/sims/<sim>.ts`, see simulation.ts) is
+ *   code-split and only downloaded when the canvas approaches the viewport (≈ client:visible).
+ * - Play/Pause and Reset are native buttons (keyboard accessible). The loop pauses when
+ *   off-screen or the tab is hidden, and stops on ClientRouter navigation.
+ * - prefers-reduced-motion: no autoplay; a static frame (after `staticTime` seconds of
+ *   simulated time) and a Play button are shown instead.
+ * - Optional `poster` image is shown before mounting, without JS, and in print.
+ * - Colours come from the design tokens and follow theme switches.
+ *
+ * Wrap it in <Figure> for a numbered caption:
+ *   <Figure alt="…" number={4} caption="…"><SimulationCanvas sim="…" alt="…" /></Figure>
+ */
+import type { ImageMetadata } from 'astro';
+import { Image } from 'astro:assets';
+import { Icon } from 'astro-icon/components';
+import type { SimParams } from './simulation';
+
+interface Props {
+  /** Module name: src/components/science/sims/<sim>.ts */
+  sim: string;
+  /** What the canvas shows (read by screen readers). */
+  alt: string;
+  /** Parameters passed to the simulation factory (JSON-serialisable). */
+  params?: SimParams;
+  /** CSS aspect-ratio of the stage. Default "16 / 9". */
+  aspect?: string;
+  /** Static image before mounting / without JS / in print. */
+  poster?: ImageMetadata;
+  /** Small label in the control bar. Default "Interactive simulation". */
+  label?: string;
+  /** Start playing when visible (ignored under prefers-reduced-motion). Default true. */
+  autoplay?: boolean;
+  /** Simulated seconds before the static frame (reduced motion, paused start). Default 0. */
+  staticTime?: number;
+  class?: string;
+}
+
+const {
+  sim,
+  alt,
+  params = {},
+  aspect = '16 / 9',
+  poster,
+  label = 'Interactive simulation',
+  autoplay = true,
+  staticTime = 0,
+  class: className,
+} = Astro.props;
+---
+
+<div
+  class:list={['sim', className]}
+  data-sim={sim}
+  data-params={JSON.stringify(params)}
+  data-autoplay={autoplay ? '' : undefined}
+  data-static-time={staticTime || undefined}
+>
+  <div class="sim__stage" style={`aspect-ratio: ${aspect}`}>
+    {poster && (
+      <Image
+        class="sim__poster"
+        src={poster}
+        alt=""
+        widths={[480, 800, 1200].filter((w) => w < poster.width).concat(poster.width)}
+        sizes="(min-width: 48rem) 42rem, 100vw"
+        loading="lazy"
+      />
+    )}
+    <canvas class="sim__canvas" role="img" aria-label={alt}></canvas>
+  </div>
+  <div class="sim__controls" data-print="hide">
+    <span class="sim__label">{label}</span>
+    <button type="button" class="sim__button" data-sim-toggle disabled>
+      <Icon name="lucide:play" class="sim__icon sim__icon--play" aria-hidden="true" />
+      <Icon name="lucide:pause" class="sim__icon sim__icon--pause" aria-hidden="true" />
+      <span data-sim-toggle-label>Play</span>
+    </button>
+    <button type="button" class="sim__button" data-sim-reset disabled>
+      <Icon name="lucide:rotate-ccw" class="sim__icon" aria-hidden="true" />
+      <span>Reset</span>
+    </button>
+  </div>
+</div>
+
+<style>
+  .sim {
+    display: grid;
+    gap: var(--space-xs);
+    min-width: 0;
+  }
+
+  .sim__stage {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--radius-sm);
+    background-color: var(--color-sunken);
+  }
+
+  .sim__poster,
+  .sim__canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .sim__poster {
+    object-fit: cover;
+  }
+
+  .sim__canvas {
+    opacity: 0;
+  }
+
+  .sim[data-ready] .sim__canvas {
+    opacity: 1;
+  }
+
+  .sim[data-ready] .sim__poster {
+    visibility: hidden;
+  }
+
+  .sim__controls {
+    display: none;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-xs);
+  }
+
+  :global(.js) .sim__controls {
+    display: flex;
+  }
+
+  .sim__label {
+    margin-right: auto;
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
+    color: var(--color-muted);
+  }
+
+  .sim__button {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2xs);
+    min-height: var(--size-target);
+    padding-inline: var(--space-sm);
+    border: var(--rule-width) solid var(--color-border-strong);
+    border-radius: var(--radius-sm);
+    background-color: var(--color-surface);
+    color: var(--color-foreground);
+    font-size: var(--text-sm);
+    font-weight: 500;
+    cursor: pointer;
+    transition: border-color var(--duration-fast) var(--ease-standard);
+
+    &:hover:not(:disabled) {
+      border-color: var(--color-foreground);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: default;
+    }
+  }
+
+  .sim__icon {
+    width: var(--size-icon-sm);
+    height: var(--size-icon-sm);
+  }
+
+  .sim:not([data-playing]) .sim__icon--pause,
+  .sim[data-playing] .sim__icon--play {
+    display: none;
+  }
+
+  @media print {
+    .sim__canvas {
+      display: none;
+    }
+
+    .sim .sim__poster {
+      visibility: visible;
+    }
+  }
+</style>
+
+<script>
+  import { readColors, type SimColors, type Simulation, type SimulationModule } from './simulation';
+
+  const modules = import.meta.glob<SimulationModule>('/src/components/science/sims/*.ts');
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const active = new Map<HTMLElement, () => void>(); // root → destroy
+
+  function mount(root: HTMLElement, sim: Simulation): () => void {
+    const canvas = root.querySelector('canvas');
+    const ctx = canvas?.getContext('2d');
+    const toggle = root.querySelector<HTMLButtonElement>('[data-sim-toggle]');
+    const toggleLabel = root.querySelector('[data-sim-toggle-label]');
+    const reset = root.querySelector<HTMLButtonElement>('[data-sim-reset]');
+    if (!canvas || !ctx || !toggle || !reset) return () => {};
+
+    let width = 0;
+    let height = 0;
+    let colors: SimColors = readColors(root);
+    let playing = 'autoplay' in root.dataset && !reduced.matches;
+    let onScreen = false;
+    let raf = 0;
+    let last = 0;
+
+    const draw = (): void => {
+      if (!width || !height) return;
+      sim.draw(ctx, { width, height, colors });
+      if (!('ready' in root.dataset)) root.dataset.ready = '';
+    };
+
+    const warmUp = (): void => {
+      sim.reset();
+      let remaining = Number(root.dataset.staticTime) || 0;
+      while (remaining > 0) {
+        sim.step(Math.min(remaining, 1 / 60));
+        remaining -= 1 / 60;
+      }
+    };
+
+    const frame = (now: number): void => {
+      raf = requestAnimationFrame(frame);
+      sim.step(Math.min((now - last) / 1000, 1 / 30));
+      last = now;
+      draw();
+    };
+
+    const update = (): void => {
+      const run = playing && onScreen && !document.hidden;
+      if (run && !raf) {
+        last = performance.now();
+        raf = requestAnimationFrame(frame);
+      } else if (!run && raf) {
+        cancelAnimationFrame(raf);
+        raf = 0;
+      }
+      root.toggleAttribute('data-playing', playing);
+      if (toggleLabel) toggleLabel.textContent = playing ? 'Pause' : 'Play';
+    };
+
+    const resize = new ResizeObserver(() => {
+      const rect = canvas.getBoundingClientRect();
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      width = rect.width;
+      height = rect.height;
+      canvas.width = Math.round(width * dpr);
+      canvas.height = Math.round(height * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      sim.resize?.(width, height);
+      draw();
+    });
+    const visibility = new IntersectionObserver(([entry]) => {
+      onScreen = entry.isIntersecting;
+      update();
+    });
+    const recolor = (): void => {
+      colors = readColors(root);
+      draw();
+    };
+    const theme = new MutationObserver(recolor);
+    const onToggle = (): void => {
+      playing = !playing;
+      update();
+    };
+    const onReset = (): void => {
+      warmUp();
+      draw();
+    };
+    const onVisibility = (): void => update();
+    const onMotion = (): void => {
+      if (reduced.matches) playing = false;
+      update();
+    };
+
+    warmUp();
+    resize.observe(canvas);
+    visibility.observe(root);
+    theme.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    toggle.addEventListener('click', onToggle);
+    reset.addEventListener('click', onReset);
+    document.addEventListener('visibilitychange', onVisibility);
+    reduced.addEventListener('change', onMotion);
+    toggle.disabled = false;
+    reset.disabled = false;
+    update();
+
+    return () => {
+      cancelAnimationFrame(raf);
+      resize.disconnect();
+      visibility.disconnect();
+      theme.disconnect();
+      toggle.removeEventListener('click', onToggle);
+      reset.removeEventListener('click', onReset);
+      document.removeEventListener('visibilitychange', onVisibility);
+      reduced.removeEventListener('change', onMotion);
+      sim.destroy?.();
+    };
+  }
+
+  async function load(root: HTMLElement): Promise<void> {
+    const name = root.dataset.sim ?? '';
+    const loader = modules[`/src/components/science/sims/${name}.ts`];
+    if (!loader) {
+      console.error(`<SimulationCanvas>: no module src/components/science/sims/${name}.ts`);
+      return;
+    }
+    try {
+      const { default: create } = await loader();
+      if (!root.isConnected || active.has(root)) return;
+      const params = JSON.parse(root.dataset.params || '{}');
+      active.set(root, mount(root, create(params)));
+    } catch (error) {
+      console.error(`<SimulationCanvas>: could not start "${name}"`, error);
+    }
+  }
+
+  // Lazy mount: download and start a simulation only when it nears the viewport.
+  let lazy: IntersectionObserver | undefined;
+
+  function init(): void {
+    lazy?.disconnect();
+    lazy = new IntersectionObserver(
+      (entries, observer) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          observer.unobserve(entry.target);
+          void load(entry.target as HTMLElement);
+        }
+      },
+      { rootMargin: '200px 0px' },
+    );
+    document.querySelectorAll<HTMLElement>('[data-sim]').forEach((root) => {
+      if (!active.has(root)) lazy?.observe(root);
+    });
+  }
+
+  function teardown(): void {
+    lazy?.disconnect();
+    active.forEach((destroy) => destroy());
+    active.clear();
+  }
+
+  init();
+  document.addEventListener('astro:page-load', init);
+  document.addEventListener('astro:before-swap', teardown);
+</script>

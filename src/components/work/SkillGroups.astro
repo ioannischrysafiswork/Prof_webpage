@@ -1,0 +1,221 @@
+---
+/**
+ * Skills on /work (#skills): categories from skills.yaml (sorted by `order`), each skill a
+ * chip plus its context of use. No levels, bars, stars or percentages (CLAUDE.md §4).
+ *
+ * Optional "toolbox" row: logos of skills that define an Iconify `icon`
+ * (e.g. simple-icons:python), each with an accessible name. Screen only.
+ * Each group gets a stable sub-anchor `skills-<id>` (e.g. /work#skills-programming-languages).
+ * Print: one line per group, "Group — Skill (context) · Skill …".
+ */
+import type { CollectionEntry } from 'astro:content';
+import { Icon } from 'astro-icon/components';
+import Chip from '@/components/ui/Chip.astro';
+import { hasValue } from './links';
+
+interface Props {
+  groups: readonly CollectionEntry<'skills'>[];
+  headingLevel?: 3 | 4;
+}
+
+const { groups, headingLevel = 3 } = Astro.props;
+const Heading = `h${headingLevel}` as 'h3' | 'h4';
+
+const sorted = [...groups]
+  .filter(({ data }) => data.items.length > 0)
+  .sort((a, b) => a.data.order - b.data.order);
+
+const seen = new Set<string>();
+const toolbox = sorted
+  .flatMap(({ data }) => data.items)
+  .filter((item): item is typeof item & { icon: string } => {
+    if (!hasValue(item.icon) || !hasValue(item.name) || seen.has(item.icon)) return false;
+    seen.add(item.icon);
+    return true;
+  });
+---
+
+{toolbox.length > 0 && (
+  <ul class="toolbox" aria-label="Toolbox" data-print="hide">
+    {toolbox.map((item) => (
+      <li class="toolbox__item" title={item.name}>
+        <Icon name={item.icon} class="toolbox__icon" aria-hidden="true" />
+        <span class="sr-only">{item.name}</span>
+      </li>
+    ))}
+  </ul>
+)}
+
+<div class="skill-groups">
+  {sorted.map(({ id, data }) => (
+    <section id={`skills-${id}`} class="skill-group" aria-labelledby={`skills-${id}-title`}>
+      <Heading id={`skills-${id}-title`} class="skill-group__title">
+        {data.group}
+      </Heading>
+      <ul class="skill-list">
+        {data.items.map((item) => (
+          <li class:list={['skill', { 'skill--context': Boolean(item.context) }]}>
+            <Chip class="skill__name">{item.name}</Chip>
+            {item.context && <span class="skill__context">{item.context}</span>}
+          </li>
+        ))}
+      </ul>
+    </section>
+  ))}
+</div>
+
+<style>
+  /* ---------------------------------------------------------------- Toolbox */
+  .toolbox {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs);
+    margin-bottom: var(--spacing-block);
+  }
+
+  .toolbox__item {
+    display: inline-grid;
+    place-items: center;
+    width: var(--size-target);
+    height: var(--size-target);
+    border: var(--rule-width) solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background-color: var(--color-surface);
+    color: var(--color-muted);
+  }
+
+  .toolbox__icon {
+    width: var(--size-icon);
+    height: var(--size-icon);
+  }
+
+  /* ----------------------------------------------------------------- Groups */
+  .skill-groups {
+    display: grid;
+    gap: 0 var(--space-xl);
+  }
+
+  @media (width >= 48rem) {
+    .skill-groups {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  .skill-group {
+    position: relative;
+    min-width: 0;
+    padding-block: var(--space-md) var(--space-lg);
+    border-top: var(--rule-width) solid var(--color-border);
+  }
+
+  .skill-group::before {
+    content: '';
+    position: absolute;
+    top: calc(var(--rule-width) * -1);
+    left: 0;
+    width: var(--space-lg);
+    border-top: var(--rule-width-strong) solid var(--tint);
+  }
+
+  .skill-group__title {
+    margin-bottom: var(--space-sm);
+    font-size: var(--text-lg);
+    line-height: var(--text-lg--line-height);
+    letter-spacing: 0;
+  }
+
+  .skill-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs);
+  }
+
+  .skill {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  /* Long skill names (e.g. "Microsoft Office (Word, Excel)") wrap instead of overflowing. */
+  .skill :global(.chip) {
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  /* Skills with context take a full row: chip, then what it is used for. */
+  .skill--context {
+    display: flex;
+    flex-basis: 100%;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--space-2xs) var(--space-sm);
+  }
+
+  .skill__context {
+    font-size: var(--text-sm);
+    line-height: var(--text-sm--line-height);
+    color: var(--color-muted);
+  }
+
+  /* ------------------------------------------------------------------ Print */
+  @media print {
+    .skill-groups {
+      display: block;
+    }
+
+    .skill-group {
+      display: grid;
+      grid-template-columns: var(--tl-date-col) minmax(0, 1fr);
+      column-gap: var(--tl-rail);
+      padding-block: var(--space-2xs);
+      border-top: 0;
+      break-inside: avoid;
+    }
+
+    .skill-group::before {
+      display: none;
+    }
+
+    .skill-group__title {
+      margin: 0;
+      font-size: var(--text-sm);
+      font-weight: 600;
+      text-align: right;
+    }
+
+    .skill-list {
+      display: block;
+      font-size: var(--text-sm);
+    }
+
+    .skill,
+    .skill--context {
+      display: inline;
+    }
+
+    .skill + .skill::before {
+      content: ' · ';
+      color: var(--color-muted);
+    }
+
+    .skill :global(.chip) {
+      display: inline;
+      padding: 0;
+      border: 0;
+      font-size: inherit;
+      white-space: normal;
+    }
+
+    .skill__context {
+      font-size: inherit;
+    }
+
+    .skill__context::before {
+      content: ' (';
+    }
+
+    .skill__context::after {
+      content: ')';
+    }
+  }
+</style>

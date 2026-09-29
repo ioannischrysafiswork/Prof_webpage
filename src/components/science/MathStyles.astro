@@ -1,0 +1,10 @@
+---
+/**
+ * Loads the KaTeX stylesheet (fonts with font-display: swap). Renders no markup.
+ *
+ * <Equation> already includes it. Add <MathStyles /> once to any page that shows maths
+ * only through Markdown/MDX `$…$` / `$$…$$` (rendered by rehype-katex at build time),
+ * so the KaTeX CSS is only shipped on pages that actually contain maths.
+ */
+import 'katex/dist/katex-swap.min.css';
+---

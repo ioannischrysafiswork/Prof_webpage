@@ -1,0 +1,145 @@
+---
+/**
+ * Body of one degree on /academic (#bachelor-degree, #master-degree): summary, CV-style
+ * facts (institution, location, period, focus, grade, key courses, thesis, documents),
+ * highlights and the entry's Markdown body. The page wraps it in a level-3 <Section>.
+ * Everything comes from `src/content/education/*.md`; missing optional fields are skipped.
+ */
+import { render } from 'astro:content';
+import ChipList from '@/components/ui/ChipList.astro';
+import Prose from '@/components/ui/Prose.astro';
+import DateRange from './DateRange.astro';
+import Fact from './Fact.astro';
+import FactList from './FactList.astro';
+import Highlights from './Highlights.astro';
+import KeyFigure from './KeyFigure.astro';
+import LinkRow from './LinkRow.astro';
+import { hasBody, present, toLinks, type EducationEntry } from './academic';
+
+interface Props {
+  entry: EducationEntry;
+  /** The thesis written for this degree, if any: title + in-page anchor. */
+  thesis?: { title: string; anchor: string };
+}
+
+const { entry, thesis } = Astro.props;
+const { data } = entry;
+const { Content } = hasBody(entry) ? await render(entry) : { Content: undefined };
+const links = toLinks(data.links, { pdf: 'Diploma / transcript (PDF)' });
+const dates = [data.start, data.end].filter(present);
+---
+
+<div class="degree">
+  {data.summary && <p class="degree__summary">{data.summary}</p>}
+
+  <FactList label={`${data.degree}: details`}>
+    <Fact label="Institution">{data.institution}</Fact>
+    {present(data.location) && <Fact label="Location">{data.location}</Fact>}
+    {dates.length > 0 && (
+      <Fact label="Period">
+        <DateRange start={data.start} end={data.end} />
+      </Fact>
+    )}
+    {data.focus.length > 0 && (
+      <Fact label="Focus">
+        <ChipList items={data.focus} label="Specialisation and focus" size="sm" />
+      </Fact>
+    )}
+    {present(data.grade) && <Fact label="Grade">{data.grade}</Fact>}
+    {data.keyCourses.length > 0 && (
+      <Fact label="Key courses">
+        <ul class="degree__courses">
+          {data.keyCourses.map((course) => (
+            <li>{course}</li>
+          ))}
+        </ul>
+      </Fact>
+    )}
+    {thesis && (
+      <Fact label="Thesis">
+        <a href={`#${thesis.anchor}`} class="link">
+          {thesis.title}
+        </a>
+      </Fact>
+    )}
+    {data.tech.length > 0 && (
+      <Fact label="Tools">
+        <ChipList items={data.tech} label="Tools used during the degree" size="sm" />
+      </Fact>
+    )}
+    {links.length > 0 && (
+      <Fact label="Documents">
+        <LinkRow links={links} label={`Documents: ${data.degree}`} />
+      </Fact>
+    )}
+  </FactList>
+
+  {(data.highlights.length > 0 || data.images[0] || Content) && (
+    <div class="degree__indent">
+      <Highlights items={data.highlights} label="Highlights" />
+
+      {data.images[0] && <KeyFigure image={data.images[0]} />}
+
+      {Content && (
+        <Prose>
+          <Content />
+        </Prose>
+      )}
+    </div>
+  )}
+</div>
+
+<style>
+  .degree {
+    display: grid;
+    gap: var(--space-lg);
+  }
+
+  .degree__summary {
+    max-width: var(--container-measure);
+    font-size: var(--text-lg);
+    line-height: var(--text-lg--line-height);
+    color: var(--color-muted);
+  }
+
+  .degree__indent {
+    display: grid;
+    gap: var(--space-lg);
+    min-width: 0;
+    max-width: var(--container-measure);
+  }
+
+  @media (width >= 48rem) {
+    .degree__summary,
+    .degree__indent {
+      margin-left: calc(var(--tl-date-col) + var(--tl-rail));
+    }
+  }
+
+  .degree__courses {
+    display: grid;
+    gap: var(--space-2xs) var(--space-lg);
+  }
+
+  @media (width >= 40rem) {
+    .degree__courses {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media print {
+    .degree,
+    .degree__indent {
+      gap: var(--space-sm);
+    }
+
+    .degree__summary,
+    .degree__indent {
+      margin-left: calc(var(--tl-date-col) + var(--space-lg));
+    }
+
+    .degree__courses {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+</style>

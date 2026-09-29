@@ -1,0 +1,88 @@
+---
+/**
+ * Compact contact row for the /academic header, so the page stands on its own:
+ * approved email + profile links (GitHub, ORCID, Google Scholar… from profile.yaml).
+ * Placeholders are skipped. Hidden in print, where the print masthead carries contact.
+ */
+import { Icon } from 'astro-icon/components';
+import type { Profile } from '@/lib/profile';
+import { url } from '@/lib/url';
+import { hasText } from './academic';
+
+interface Props {
+  profile: Profile;
+  class?: string;
+}
+
+const { profile, class: className } = Astro.props;
+
+const links = [
+  ...(hasText(profile.contact.email)
+    ? [
+        {
+          label: profile.contact.email,
+          href: `mailto:${profile.contact.email}`,
+          icon: 'lucide:mail',
+          rel: undefined,
+        },
+      ]
+    : []),
+  ...profile.socials
+    .filter((social) => hasText(social.url))
+    .map((social) => ({
+      label: social.label,
+      href: url(social.url),
+      icon: social.icon ?? 'lucide:link',
+      rel: 'me noopener',
+    })),
+];
+---
+
+{links.length > 0 && (
+  <ul class:list={['contact', className]} aria-label="Contact and profiles" data-print="hide">
+    {links.map((link) => (
+      <li>
+        <a href={link.href} rel={link.rel} class="contact__link">
+          <Icon name={link.icon} class="contact__icon" aria-hidden="true" />
+          <span>{link.label}</span>
+        </a>
+      </li>
+    ))}
+  </ul>
+)}
+
+<style>
+  .contact {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2xs) var(--space-lg);
+    font-size: var(--text-sm);
+    line-height: var(--text-sm--line-height);
+  }
+
+  .contact__link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    min-height: var(--size-target);
+    color: var(--color-muted);
+    text-decoration: none;
+    transition: color var(--duration-fast) var(--ease-standard);
+  }
+
+  .contact__link:hover {
+    color: var(--color-accent);
+  }
+
+  .contact__link span {
+    text-decoration-line: underline;
+    text-decoration-color: var(--color-border-strong);
+    text-underline-offset: 0.2em;
+  }
+
+  .contact__icon {
+    flex: none;
+    width: var(--size-icon);
+    height: var(--size-icon);
+  }
+</style>

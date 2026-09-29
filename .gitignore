@@ -8,8 +8,9 @@ node_modules/
 dist/
 .astro/
 
-# QA artefacts (screenshots, Lighthouse reports)
+# QA artefacts (screenshots, Lighthouse reports, Playwright MCP snapshots)
 .qa/
+.playwright-mcp/
 
 # Secrets & local config
 .env

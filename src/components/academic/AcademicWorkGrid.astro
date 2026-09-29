@@ -1,0 +1,198 @@
+---
+/**
+ * Grid of academic work cards (#projects) with a type filter that needs NO JavaScript:
+ * native radio buttons + CSS `:has()`. Keyboard: Tab to the group, arrow keys to switch.
+ *
+ * Progressive enhancement: the filter only renders when there are at least two known
+ * types; browsers without `:has()` hide the filter and show every card; print always
+ * shows every card. Entries whose type is still a TODO placeholder are never filtered out
+ * of "All" and have no filter option of their own.
+ */
+import AcademicWorkCard from './AcademicWorkCard.astro';
+import { PROJECT_TYPES, WORK_TYPE_LABEL, workType, type AcademicWorkEntry } from './academic';
+
+interface Props {
+  entries: readonly AcademicWorkEntry[];
+  /** Accessible name of the list. */
+  label: string;
+}
+
+const { entries, label } = Astro.props;
+
+const counts = new Map<string, number>();
+for (const entry of entries) {
+  const type = workType(entry);
+  if (type) counts.set(type, (counts.get(type) ?? 0) + 1);
+}
+// Filter options in a fixed, meaningful order (not content order).
+const options = PROJECT_TYPES.filter((type) => counts.has(type)).map((type) => ({
+  value: type,
+  label: WORK_TYPE_LABEL[type],
+  count: counts.get(type) ?? 0,
+}));
+const filterable = options.length >= 2;
+---
+
+<div class="aw">
+  {filterable && (
+    <fieldset class="aw__filter" data-print="hide">
+      <legend class="aw__legend">Show</legend>
+      <div class="aw__options">
+        <label class="aw__option">
+          <input type="radio" name="academic-work-type" value="all" checked />
+          <span>All</span>
+          <span class="aw__count">{entries.length}</span>
+        </label>
+        {options.map((option) => (
+          <label class="aw__option">
+            <input type="radio" name="academic-work-type" value={option.value} />
+            <span>{option.label}</span>
+            <span class="aw__count">{option.count}</span>
+          </label>
+        ))}
+      </div>
+    </fieldset>
+  )}
+
+  <ul class="aw__grid" aria-label={label}>
+    {entries.map((entry) => (
+      <li class="aw__item" data-type={workType(entry) ?? 'unknown'}>
+        <AcademicWorkCard entry={entry} as="article" id={`project-${entry.id}`} />
+      </li>
+    ))}
+  </ul>
+</div>
+
+<style>
+  .aw {
+    display: grid;
+    gap: var(--space-lg);
+  }
+
+  /* ------------------------------------------------------------- Filter */
+  .aw__filter {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-xs) var(--space-sm);
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+
+  .aw__legend {
+    float: left; /* lets the legend sit inline with the options */
+    margin-right: var(--space-xs);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
+    color: var(--color-muted);
+  }
+
+  .aw__options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs);
+  }
+
+  .aw__option {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    min-height: var(--size-target);
+    padding-inline: var(--space-sm);
+    border: var(--rule-width) solid var(--color-border-strong);
+    border-radius: var(--radius-sm);
+    background-color: var(--color-surface);
+    font-size: var(--text-sm);
+    color: var(--color-foreground);
+    cursor: pointer;
+    transition:
+      border-color var(--duration-fast) var(--ease-standard),
+      background-color var(--duration-fast) var(--ease-standard);
+  }
+
+  .aw__option:hover {
+    border-color: var(--tint);
+  }
+
+  /* Visually hidden, still focusable and announced as a radio. */
+  .aw__option input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+
+  .aw__option:has(input:checked) {
+    border-color: var(--tint);
+    background-color: color-mix(in oklab, var(--tint) 10%, var(--color-surface));
+    color: var(--tint);
+    font-weight: 500;
+  }
+
+  .aw__option:has(input:focus-visible) {
+    outline: var(--focus-ring-width) solid var(--color-accent);
+    outline-offset: var(--focus-ring-offset);
+  }
+
+  .aw__count {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--color-muted);
+  }
+
+  /* Without :has() the filter could not work: hide it, every card stays visible. */
+  @supports not selector(:has(*)) {
+    .aw__filter {
+      display: none;
+    }
+  }
+
+  /* -------------------------------------------------------------- Grid */
+  .aw__grid {
+    display: grid;
+    gap: var(--space-lg);
+  }
+
+  @media (width >= 48rem) {
+    .aw__grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (width >= 64rem) {
+    .aw__grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  .aw__item {
+    display: grid;
+    min-width: 0;
+  }
+
+  /* Filtering (screen only; print shows everything). One rule per filterable type. */
+  @media screen {
+    .aw:has(input[value='exercise']:checked) .aw__item:not([data-type='exercise']),
+    .aw:has(input[value='assignment']:checked) .aw__item:not([data-type='assignment']),
+    .aw:has(input[value='project']:checked) .aw__item:not([data-type='project']),
+    .aw:has(input[value='simulation']:checked) .aw__item:not([data-type='simulation']),
+    .aw:has(input[value='report']:checked) .aw__item:not([data-type='report']) {
+      display: none;
+    }
+  }
+
+  @media print {
+    .aw__grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: var(--print-gap);
+    }
+  }
+</style>

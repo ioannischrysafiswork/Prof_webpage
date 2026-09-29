@@ -1,0 +1,135 @@
+---
+/**
+ * JSON-LD for /academic: a ProfilePage whose main entity is the Person, with `alumniOf`
+ * (institutions), `hasCredential` (EducationalOccupationalCredential per degree) and the
+ * theses as `Thesis` items. Built only from content; any field that is still a
+ * `TODO(ioannis)` placeholder is left out, so structured data never carries drafts.
+ * Place it in BaseLayout's `head` slot.
+ */
+import { hasText, DEGREE_LABEL, type EducationEntry, type ThesisEntry } from './academic';
+import { toDateTimeAttr } from '@/lib/dates';
+import type { Profile } from '@/lib/profile';
+import { absoluteUrl } from '@/lib/url';
+
+interface Props {
+  profile: Profile;
+  /** Degrees with the anchor they have on the page. */
+  degrees: readonly { entry: EducationEntry; anchor: string }[];
+  theses: readonly { entry: ThesisEntry; anchor: string }[];
+  /** Site path of the page, e.g. '/academic'. */
+  path: string;
+  title: string;
+  description: string;
+}
+
+const { profile, degrees, theses, path, title, description } = Astro.props;
+
+type Json = Record<string, unknown>;
+const pageUrl = absoluteUrl(path);
+const personId = `${absoluteUrl('/')}#person`;
+const clean = (value: Json): Json =>
+  Object.fromEntries(
+    Object.entries(value).filter(
+      ([, v]) => v !== undefined && v !== null && !(Array.isArray(v) && v.length === 0),
+    ),
+  );
+const organisation = (name: string, location?: string): Json =>
+  clean({
+    '@type': 'EducationalOrganization',
+    name,
+    address: hasText(location) ? location : undefined,
+  });
+// absoluteUrl() applies the base path itself (via url()); never pass it an already-based href.
+const abs = (link: string | undefined) => (hasText(link) ? absoluteUrl(link) : undefined);
+const isoDate = (value: string | undefined) => toDateTimeAttr(value);
+
+const institutions = new Map<string, Json>();
+for (const { entry } of degrees) {
+  const { institution, location } = entry.data;
+  if (hasText(institution) && !institutions.has(institution)) {
+    institutions.set(institution, organisation(institution, location));
+  }
+}
+
+const credentials = degrees
+  .filter(({ entry }) => hasText(entry.data.degree))
+  .map(({ entry, anchor }) =>
+    clean({
+      '@type': 'EducationalOccupationalCredential',
+      '@id': `${pageUrl}#${anchor}`,
+      name: entry.data.degree,
+      credentialCategory: 'degree',
+      educationalLevel: DEGREE_LABEL[entry.data.level],
+      recognizedBy: hasText(entry.data.institution)
+        ? organisation(entry.data.institution, entry.data.location)
+        : undefined,
+      dateCreated: isoDate(entry.data.end),
+      url: `${pageUrl}#${anchor}`,
+    }),
+  );
+
+const thesisItems = theses
+  .filter(({ entry }) => hasText(entry.data.title))
+  .map(({ entry, anchor }) => {
+    const { data } = entry;
+    const degree = degrees.find(({ entry: d }) => d.data.level === data.level);
+    const pdf = abs(data.links.pdf);
+    return clean({
+      '@type': 'Thesis',
+      '@id': `${pageUrl}#${anchor}`,
+      name: data.title,
+      headline: data.title,
+      author: { '@id': personId },
+      abstract: hasText(data.abstract) ? data.abstract : undefined,
+      datePublished: isoDate(data.end),
+      inSupportOf:
+        degree && hasText(degree.entry.data.degree) ? degree.entry.data.degree : undefined,
+      sourceOrganization: hasText(data.institution)
+        ? organisation([data.institution, data.department].filter(hasText).join(', '))
+        : undefined,
+      keywords: data.methods.filter(hasText).join(', ') || undefined,
+      url: `${pageUrl}#${anchor}`,
+      associatedMedia: pdf
+        ? { '@type': 'MediaObject', contentUrl: pdf, encodingFormat: 'application/pdf' }
+        : undefined,
+      inLanguage: 'en',
+    });
+  });
+
+const sameAs = profile.socials.map((social) => social.url).filter((link) => /^https?:/.test(link));
+
+const person = clean({
+  '@type': 'Person',
+  '@id': personId,
+  name: profile.name,
+  url: absoluteUrl('/'),
+  description: hasText(profile.headline) ? profile.headline : undefined,
+  email: hasText(profile.contact.email) ? `mailto:${profile.contact.email}` : undefined,
+  sameAs,
+  alumniOf: [...institutions.values()],
+  hasCredential: credentials,
+});
+
+const graph = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    clean({
+      '@type': 'ProfilePage',
+      '@id': pageUrl,
+      url: pageUrl,
+      name: title,
+      description,
+      inLanguage: 'en',
+      mainEntity: { '@id': personId },
+      hasPart: thesisItems.map((item) => ({ '@id': item['@id'] })),
+    }),
+    person,
+    ...thesisItems,
+  ],
+};
+
+// Escape "<" so the JSON can never close the <script> element early.
+const json = JSON.stringify(graph).replace(/</g, '\\u003c');
+---
+
+<script is:inline type="application/ld+json" set:html={json} />

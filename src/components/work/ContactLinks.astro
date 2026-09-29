@@ -1,0 +1,90 @@
+---
+/**
+ * Contact row for the /work intro, so a recruiter landing on /work can get in touch
+ * without scrolling to the footer. Only approved values from profile.yaml (contact.email,
+ * socials, location); placeholders are skipped. Hidden in print: the print masthead
+ * already carries the contact line.
+ */
+import { Icon } from 'astro-icon/components';
+import type { Profile } from '@/lib/profile';
+import { url } from '@/lib/url';
+import { hasValue } from './links';
+
+interface Props {
+  profile: Profile;
+  class?: string;
+}
+
+const { profile, class: className } = Astro.props;
+
+const email = hasValue(profile.contact.email) ? profile.contact.email : undefined;
+const socials = profile.socials.filter((social) => hasValue(social.url));
+const location = hasValue(profile.location) ? profile.location : undefined;
+const hasAny = Boolean(email || socials.length || location);
+---
+
+{hasAny && (
+  <ul class:list={['contact', className]} aria-label="Contact" data-print="hide">
+    {email && (
+      <li>
+        <a href={`mailto:${email}`} class="contact__link">
+          <Icon name="lucide:mail" class="contact__icon" aria-hidden="true" />
+          <span>{email}</span>
+        </a>
+      </li>
+    )}
+    {socials.map((social) => (
+      <li>
+        <a href={url(social.url)} rel="me noopener" class="contact__link">
+          <Icon name={social.icon ?? 'lucide:link'} class="contact__icon" aria-hidden="true" />
+          <span>{social.label}</span>
+        </a>
+      </li>
+    ))}
+    {location && (
+      <li class="contact__item">
+        <Icon name="lucide:map-pin" class="contact__icon" aria-hidden="true" />
+        <span>{location}</span>
+      </li>
+    )}
+  </ul>
+)}
+
+<style>
+  .contact {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0 var(--space-md);
+    font-size: var(--text-sm);
+  }
+
+  .contact__link,
+  .contact__item {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    min-height: var(--size-target);
+  }
+
+  .contact__link {
+    color: var(--color-foreground);
+    text-decoration: none;
+  }
+
+  .contact__link:hover span {
+    text-decoration: underline;
+    text-decoration-color: var(--color-border-strong);
+  }
+
+  .contact__item {
+    color: var(--color-muted);
+  }
+
+  .contact__icon {
+    flex: none;
+    width: var(--size-icon);
+    height: var(--size-icon);
+    color: var(--color-muted);
+  }
+</style>

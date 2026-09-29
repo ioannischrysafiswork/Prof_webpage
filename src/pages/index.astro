@@ -1,48 +1,35 @@
 ---
 /**
  * Home — `/` (CLAUDE.md §2.1). Permanent route.
- * Skeleton wired to the design system: home-page-builder fills in each section.
  * Stable anchors: #about, #highlights, #explore, #interests.
+ *
+ * 1. Hero: name, headline, personal intro (profile.yaml), quick links to the two areas.
+ * 2. Highlights: featured degrees, roles, certifications, achievements (shared collections).
+ * 3. Explore: large entry cards to Work Experience and Academic.
+ * 4. Beyond work & academia: interests.yaml.
+ * Contact lives in the shared Footer.
  */
 import BaseLayout from '@/layouts/BaseLayout.astro';
-import PageHeader from '@/components/ui/PageHeader.astro';
-import Section from '@/components/ui/Section.astro';
-import Card from '@/components/ui/Card.astro';
+import HomeHero from '@/components/home/HomeHero.astro';
+import HomeHighlights from '@/components/home/HomeHighlights.astro';
+import EntryCards from '@/components/home/EntryCards.astro';
+import HomeInterests from '@/components/home/HomeInterests.astro';
+import HomeJsonLd from '@/components/home/HomeJsonLd.astro';
+import { getEntryPreviews, getHighlights } from '@/components/home/data';
 import { getProfile } from '@/lib/profile';
-import { NAV } from '@/lib/site';
-import { url } from '@/lib/url';
 
-const profile = await getProfile();
-const entryPoints = NAV.filter((item) => item.key !== 'home');
+const path = '/';
+const [profile, highlights, previews] = await Promise.all([
+  getProfile(),
+  getHighlights(),
+  getEntryPreviews(),
+]);
 ---
 
-<BaseLayout page="home" path="/">
-  <PageHeader id="about" title={profile.name} lede={profile.headline}>
-    <p>{profile.intro.home}</p>
-  </PageHeader>
-
-  <Section id="highlights" eyebrow="At a glance" title="Highlights">
-    {/* Degrees, key certifications, achievements — featured entries from the collections. */}
-  </Section>
-
-  <Section id="explore" eyebrow="Explore" title="Explore">
-    <ul class="grid gap-6 md:grid-cols-2">
-      {entryPoints.map((item) => (
-        <Card
-          as="li"
-          variant="feature"
-          tint={item.key}
-          title={item.label}
-          headingLevel={3}
-          href={url(item.path)}
-        >
-          <p>{item.description}</p>
-        </Card>
-      ))}
-    </ul>
-  </Section>
-
-  <Section id="interests" eyebrow="Outside work" title="Outside work">
-    {/* Hobbies and interests from interests.yaml. */}
-  </Section>
+<BaseLayout page="home" path={path}>
+  <HomeJsonLd slot="head" profile={profile} path={path} />
+  <HomeHero profile={profile} />
+  <HomeHighlights items={highlights} />
+  <EntryCards previews={previews} />
+  <HomeInterests />
 </BaseLayout>

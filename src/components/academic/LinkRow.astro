@@ -1,0 +1,77 @@
+---
+/**
+ * Inline row of labelled links (code, report, website…) with small icons.
+ * hrefs must be final (see `toLinks()` in ./academic.ts). Internal links print their
+ * absolute URL; external ones print it via the global print stylesheet.
+ */
+import { Icon } from 'astro-icon/components';
+import { absoluteHref } from '@/lib/url';
+import type { LabelledLink } from './academic';
+
+interface Props {
+  links: readonly LabelledLink[];
+  /** Accessible name, e.g. "Links for <title>". */
+  label?: string;
+  class?: string;
+}
+
+const { links, label, class: className } = Astro.props;
+const isExternal = (href: string) => /^https?:\/\//i.test(href);
+---
+
+{links.length > 0 && (
+  <ul class:list={['link-row', className]} aria-label={label}>
+    {links.map((link) => (
+      <li>
+        <a
+          href={link.href}
+          class="link link-row__link"
+          data-print-url={isExternal(link.href) ? undefined : absoluteHref(link.href)}
+        >
+          {link.icon && <Icon name={link.icon} class="link-row__icon" aria-hidden="true" />}
+          <span>{link.label}</span>
+          {isExternal(link.href) && (
+            <Icon name="lucide:arrow-up-right" class="link-row__ext" aria-hidden="true" />
+          )}
+        </a>
+      </li>
+    ))}
+  </ul>
+)}
+
+<style>
+  .link-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2xs) var(--space-md);
+    font-size: var(--text-sm);
+    line-height: var(--text-sm--line-height);
+  }
+
+  .link-row__link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2xs);
+    min-height: var(--size-mark);
+  }
+
+  .link-row__icon {
+    flex: none;
+    width: var(--size-icon-sm);
+    height: var(--size-icon-sm);
+  }
+
+  .link-row__ext {
+    flex: none;
+    width: var(--size-icon-sm);
+    height: var(--size-icon-sm);
+    color: var(--color-muted);
+  }
+
+  @media print {
+    .link-row__icon,
+    .link-row__ext {
+      display: none;
+    }
+  }
+</style>

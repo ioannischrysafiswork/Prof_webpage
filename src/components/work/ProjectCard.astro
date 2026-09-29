@@ -1,0 +1,92 @@
+---
+/**
+ * One curated project on /work: optional thumbnail (images[0]), title, one-line problem
+ * statement (tagline), optional summary, stack chips, and repo / demo links.
+ * The meta line shows the project dates and, when available, the repository's primary
+ * language and stars fetched at BUILD time (./github.ts; never at runtime).
+ */
+import type { CollectionEntry } from 'astro:content';
+import { Image } from 'astro:assets';
+import Card from '@/components/ui/Card.astro';
+import ChipList from '@/components/ui/ChipList.astro';
+import LinkButton from '@/components/ui/LinkButton.astro';
+import { formatRange, isTodo } from '@/lib/dates';
+import { getRepoMeta } from './github';
+import { hasValue, resolveLinks } from './links';
+
+interface Props {
+  entry: CollectionEntry<'projects'>;
+}
+
+/** Star counts below this are left out: low numbers read as noise on a CV. */
+const MIN_STARS_SHOWN = 5;
+
+const { entry } = Astro.props;
+const { data } = entry;
+
+const links = resolveLinks(data.links, { order: ['repo', 'demo', 'code', 'report', 'pdf'] });
+const repo = links.find((link) => link.key === 'repo');
+const github = await getRepoMeta(repo?.external ? repo.href : undefined);
+
+const lowerTech = new Set(data.tech.map((tech) => tech.toLowerCase()));
+const dates =
+  data.start && !isTodo(data.start) && !isTodo(data.end) ? formatRange(data.start, data.end) : '';
+const meta = [
+  dates,
+  github?.language && !lowerTech.has(github.language.toLowerCase()) ? github.language : '',
+  github && github.stars >= MIN_STARS_SHOWN ? `${github.stars} stars` : '',
+  github?.archived ? 'Archived' : '',
+]
+  .filter(Boolean)
+  .join(' · ');
+
+const cover = data.images[0];
+const title = data.title;
+---
+
+<Card as="li" title={title} meta={meta || undefined} class="work-project">
+  {cover && (
+    <Fragment slot="media">
+      <Image
+        src={cover.src}
+        alt={cover.alt}
+        widths={[480, 800]}
+        sizes="(min-width: 76rem) 24rem, (min-width: 64rem) 30vw, (min-width: 48rem) 45vw, 100vw"
+        class="work-project__image"
+      />
+    </Fragment>
+  )}
+  <p class="project__tagline">{data.tagline}</p>
+  {data.summary && <p>{data.summary}</p>}
+  <ChipList
+    items={data.tech}
+    size="sm"
+    label={hasValue(title) ? `Stack: ${title}` : 'Stack'}
+    class="work-project__stack"
+  />
+  {links.length > 0 && (
+    <Fragment slot="footer">
+      {links.map((link) => (
+        <LinkButton href={link.href} size="sm">
+          {link.label}
+          <span class="sr-only">: {title}</span>
+        </LinkButton>
+      ))}
+    </Fragment>
+  )}
+</Card>
+
+<style>
+  .project__tagline {
+    color: var(--color-foreground);
+  }
+
+  :global(.work-project__stack) {
+    margin-top: var(--space-sm);
+  }
+
+  :global(.work-project__image) {
+    aspect-ratio: 16 / 10;
+    object-fit: cover;
+  }
+</style>

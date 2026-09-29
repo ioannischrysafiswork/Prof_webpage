@@ -1,0 +1,56 @@
+---
+/**
+ * One role on the /work timeline: a <TimelineItem> fed from an `experience` entry.
+ * Details (highlights, tech, links, Markdown body) are always shown on /work
+ * (`collapsible={false}`) so recruiters and printed CVs see everything at once.
+ * The organisation's website (links.website) is listed first among the item links.
+ */
+import { render, type CollectionEntry } from 'astro:content';
+import TimelineItem from '@/components/timeline/TimelineItem.astro';
+import Prose from '@/components/ui/Prose.astro';
+import { hasValue, resolveLinks } from './links';
+
+interface Props {
+  entry: CollectionEntry<'experience'>;
+  headingLevel?: 3 | 4;
+}
+
+const { entry, headingLevel = 3 } = Astro.props;
+const { data } = entry;
+
+const links = resolveLinks(data.links, {
+  labels: {
+    website: hasValue(data.organisation) ? `${data.organisation} website` : undefined,
+  },
+}).map(({ label, href }) => ({ label, href }));
+
+// Render the Markdown body only when there is one, so empty entries add no empty block.
+const hasBody = Boolean(entry.body?.trim());
+const Content = hasBody ? (await render(entry)).Content : undefined;
+
+const item = {
+  title: data.role,
+  subtitle: data.organisation,
+  meta: [data.location, data.employmentType],
+  start: data.start,
+  end: data.end,
+  showDuration: true,
+  summary: data.summary,
+  highlights: data.highlights,
+  tech: data.tech,
+  techLabel: hasValue(data.role) ? `Tools and technologies: ${data.role}` : undefined,
+  links,
+  collapsible: false,
+  headingLevel,
+};
+---
+
+{Content ? (
+  <TimelineItem {...item}>
+    <Prose class="experience-body">
+      <Content />
+    </Prose>
+  </TimelineItem>
+) : (
+  <TimelineItem {...item} />
+)}

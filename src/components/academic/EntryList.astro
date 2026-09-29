@@ -1,0 +1,207 @@
+---
+/**
+ * Compact, CV-style list of dated entries (other qualifications, talks, posters…):
+ * a mono date column aligned with the roadmap's date column, then title, organisation,
+ * summary, highlights, chips and links. Lighter than the timeline: no rail, no toggles.
+ * Pass an `empty` slot to show something when there are no items.
+ */
+import { render } from 'astro:content';
+import ChipList from '@/components/ui/ChipList.astro';
+import Chip from '@/components/ui/Chip.astro';
+import Prose from '@/components/ui/Prose.astro';
+import DateRange from './DateRange.astro';
+import Highlights from './Highlights.astro';
+import LinkRow from './LinkRow.astro';
+import { hasBody, present, type LabelledLink } from './academic';
+import type { CollectionEntry } from 'astro:content';
+
+export interface EntryItem {
+  key: string;
+  title: string;
+  /** Institution / organiser / venue. */
+  subtitle?: string;
+  meta?: readonly (string | null | undefined)[];
+  /** Small tinted badge before the title, e.g. the type ("Talk"). */
+  badge?: string;
+  start?: string | null;
+  end?: string | null;
+  summary?: string;
+  highlights?: readonly string[];
+  chips?: readonly string[];
+  chipsLabel?: string;
+  links?: readonly LabelledLink[];
+  /** Optional entry whose Markdown/MDX body is rendered below the summary. */
+  entry?: CollectionEntry<'education'> | CollectionEntry<'academicWork'>;
+}
+
+interface Props {
+  items: readonly EntryItem[];
+  /** Accessible name of the list. */
+  label: string;
+  headingLevel?: 3 | 4;
+  class?: string;
+}
+
+const { items, label, headingLevel = 3, class: className } = Astro.props;
+const Heading = `h${headingLevel}` as 'h3' | 'h4';
+
+const rendered = await Promise.all(
+  items.map(async (item) =>
+    item.entry && hasBody(item.entry) ? (await render(item.entry)).Content : undefined,
+  ),
+);
+---
+
+{items.length > 0 ? (
+  <ul class:list={['entries', className]} aria-label={label}>
+    {items.map((item, index) => {
+      const Content = rendered[index];
+      const meta = [item.subtitle, ...(item.meta ?? [])].filter(present);
+      return (
+        <li class="entry">
+          <div class="entry__body">
+            {item.badge && (
+              <p class="entry__badge">
+                <Chip variant="tint" size="sm">
+                  {item.badge}
+                </Chip>
+              </p>
+            )}
+            <Heading class="entry__title">{item.title}</Heading>
+            {meta.length > 0 && (
+              <p class="entry__meta">
+                {meta.map((value) => (
+                  <span>{value}</span>
+                ))}
+              </p>
+            )}
+            {item.summary && <p class="entry__summary">{item.summary}</p>}
+            <Highlights items={item.highlights ?? []} label="Highlights" />
+            {Content && (
+              <Prose>
+                <Content />
+              </Prose>
+            )}
+            <ChipList items={item.chips ?? []} label={item.chipsLabel} size="sm" />
+            <LinkRow links={item.links ?? []} label={`Links: ${item.title}`} />
+          </div>
+          {(present(item.start) || present(item.end)) && (
+            <p class="entry__when">
+              <DateRange start={item.start} end={item.end} />
+            </p>
+          )}
+        </li>
+      );
+    })}
+  </ul>
+) : (
+  <slot name="empty" />
+)}
+
+<style>
+  .entries {
+    display: grid;
+    gap: var(--space-lg);
+    max-width: calc(var(--tl-date-col) + var(--tl-rail) + var(--container-measure));
+  }
+
+  .entry {
+    display: grid;
+    grid-template-areas:
+      'when'
+      'body';
+    gap: var(--space-2xs);
+    padding-top: var(--space-lg);
+    border-top: var(--rule-width) solid var(--color-border);
+  }
+
+  .entry:first-child {
+    padding-top: 0;
+    border-top: 0;
+  }
+
+  .entry__when {
+    grid-area: when;
+    color: var(--color-foreground);
+  }
+
+  .entry__body {
+    grid-area: body;
+    display: grid;
+    justify-items: start;
+    gap: var(--space-xs);
+    min-width: 0;
+    max-width: var(--container-measure);
+  }
+
+  .entry__title {
+    font-size: var(--text-xl);
+    line-height: var(--text-xl--line-height);
+  }
+
+  .entry__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 var(--space-xs);
+    font-size: var(--text-sm);
+    color: var(--color-muted);
+  }
+
+  .entry__meta > span:first-child {
+    font-weight: 500;
+    color: var(--color-foreground);
+  }
+
+  .entry__meta > span + span::before {
+    content: '·';
+    margin-right: var(--space-xs);
+  }
+
+  .entry__summary {
+    color: var(--color-muted);
+  }
+
+  @media (width >= 48rem) {
+    .entry {
+      grid-template-columns: var(--tl-date-col) minmax(0, 1fr);
+      grid-template-areas: 'when body';
+      column-gap: var(--tl-rail);
+    }
+
+    .entry__when {
+      text-align: right;
+      /* Centre the date on the title's first line. */
+      padding-top: calc(
+        (
+            var(--text-xl) * var(--text-xl--line-height) - var(--text-sm) *
+              var(--text-sm--line-height)
+          ) /
+          2
+      );
+    }
+
+    /* A badge above the title pushes it down; keep the date aligned with the badge. */
+    .entry:has(.entry__badge) .entry__when {
+      padding-top: 0;
+    }
+  }
+
+  @media print {
+    .entries {
+      gap: var(--print-gap);
+    }
+
+    .entry {
+      grid-template-columns: var(--tl-date-col) minmax(0, 1fr);
+      grid-template-areas: 'when body';
+      column-gap: var(--space-lg);
+      padding-top: var(--print-gap);
+      break-inside: avoid;
+    }
+
+    .entry__when {
+      text-align: right;
+      padding-top: 0;
+    }
+  }
+</style>

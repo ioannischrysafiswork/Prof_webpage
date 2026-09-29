@@ -1,0 +1,68 @@
+---
+/**
+ * One row of a <FactList>: <dt> label (mono) + <dd> value (default slot).
+ * Below 48rem the label sits above the value; from 48rem it moves to a right-aligned
+ * column the width of the timeline date column, so facts line up with the roadmap.
+ */
+interface Props {
+  label: string;
+  class?: string;
+}
+
+const { label, class: className } = Astro.props;
+---
+
+<div class:list={['fact', className]}>
+  <dt class="fact__label">{label}</dt>
+  <dd class="fact__value">
+    <slot />
+  </dd>
+</div>
+
+<style>
+  .fact {
+    display: grid;
+    gap: var(--space-2xs);
+    min-width: 0;
+  }
+
+  .fact__label {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    line-height: var(--text-xs--line-height);
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
+    color: var(--color-muted);
+  }
+
+  .fact__value {
+    min-width: 0;
+    max-width: var(--container-measure);
+    overflow-wrap: anywhere;
+  }
+
+  @media (width >= 48rem) {
+    .fact {
+      grid-template-columns: var(--tl-date-col) minmax(0, 1fr);
+      column-gap: var(--tl-rail);
+      align-items: baseline;
+    }
+
+    .fact__label {
+      text-align: right;
+    }
+  }
+
+  @media print {
+    .fact {
+      grid-template-columns: var(--tl-date-col) minmax(0, 1fr);
+      column-gap: var(--space-lg);
+      align-items: baseline;
+      break-inside: avoid;
+    }
+
+    .fact__label {
+      text-align: right;
+    }
+  }
+</style>

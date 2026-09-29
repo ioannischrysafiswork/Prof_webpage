@@ -1,0 +1,43 @@
+---
+/**
+ * Bullet list of highlights with the notebook-style tinted dash used by the timeline.
+ * Renders nothing when `items` is empty.
+ */
+interface Props {
+  items: readonly string[];
+  label?: string;
+  class?: string;
+}
+
+const { items, label, class: className } = Astro.props;
+---
+
+{items.length > 0 && (
+  <ul class:list={['highlights', className]} aria-label={label}>
+    {items.map((item) => (
+      <li>{item}</li>
+    ))}
+  </ul>
+)}
+
+<style>
+  .highlights {
+    display: grid;
+    gap: var(--space-2xs);
+    max-width: var(--container-measure);
+  }
+
+  .highlights > li {
+    position: relative;
+    padding-left: var(--space-md);
+  }
+
+  .highlights > li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: calc(1lh / 2);
+    width: var(--space-xs);
+    border-top: var(--rule-width) solid var(--tint);
+  }
+</style>

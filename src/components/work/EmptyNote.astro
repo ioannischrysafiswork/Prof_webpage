@@ -1,0 +1,22 @@
+---
+/**
+ * Muted one-liner for a /work section whose collection is empty. The section itself
+ * (and its stable anchor) always renders, because /work#… links are printed in CVs.
+ */
+interface Props {
+  class?: string;
+}
+
+const { class: className } = Astro.props;
+---
+
+<p class:list={['empty-note', className]}>
+  <slot />
+</p>
+
+<style>
+  .empty-note {
+    max-width: var(--container-measure);
+    color: var(--color-muted);
+  }
+</style>

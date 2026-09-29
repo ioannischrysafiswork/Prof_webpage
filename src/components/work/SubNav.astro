@@ -1,0 +1,108 @@
+---
+/**
+ * In-page navigation for /work: links to the stable section anchors.
+ * < 64rem: a horizontally scrolling row of chips below the intro (not sticky, to keep the
+ * small viewport free). ≥ 64rem: sticks under the site header.
+ *
+ * Zero JavaScript. The link of the section in view is highlighted with CSS scroll
+ * markers (`scroll-target-group` + `:target-current`, Chromium 140+); other browsers
+ * simply show the plain links. Hidden in print.
+ */
+interface Item {
+  /** Anchor id of the section (without "#"). */
+  id: string;
+  label: string;
+}
+
+interface Props {
+  items: readonly Item[];
+  /** Accessible name of the navigation landmark. */
+  label?: string;
+}
+
+const { items, label = 'On this page' } = Astro.props;
+---
+
+<nav class="subnav" aria-label={label} data-print="hide">
+  <div class="subnav__inner container-page">
+    <ul class="subnav__list">
+      {items.map((item) => (
+        <li>
+          <a href={`#${item.id}`} class="subnav__link">
+            {item.label}
+          </a>
+        </li>
+      ))}
+    </ul>
+  </div>
+</nav>
+
+<style>
+  .subnav {
+    border-block: var(--rule-width) solid var(--color-border);
+    background-color: var(--color-background);
+  }
+
+  @media (width >= 64rem) {
+    .subnav {
+      position: sticky;
+      /* Overlap the header's bottom hairline so the two rules read as one. */
+      top: calc(var(--header-height) - var(--rule-width));
+      z-index: calc(var(--z-header) - 1);
+    }
+
+    /* Anchor targets (e.g. /work#skills) clear the header AND this bar. */
+    :global(main:has(.subnav) [id]) {
+      scroll-margin-top: calc(var(--header-height) + var(--size-target) + var(--space-md));
+    }
+  }
+
+  .subnav__list {
+    display: flex;
+    gap: var(--space-md);
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+    scroll-target-group: auto;
+  }
+
+  .subnav__list::-webkit-scrollbar {
+    display: none;
+  }
+
+  .subnav__list > li {
+    flex: none;
+  }
+
+  .subnav__link {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--size-target);
+    border-bottom: var(--rule-width-strong) solid transparent;
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    line-height: var(--text-xs--line-height);
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
+    white-space: nowrap;
+    color: var(--color-muted);
+    text-decoration: none;
+    transition:
+      color var(--duration-fast) var(--ease-standard),
+      border-color var(--duration-fast) var(--ease-standard);
+  }
+
+  .subnav__link:hover {
+    color: var(--color-foreground);
+  }
+
+  .subnav__link:focus-visible {
+    outline-offset: calc(var(--focus-ring-width) * -1);
+  }
+
+  /* Section currently in view (progressive enhancement, CSS scroll markers). */
+  .subnav__link:target-current {
+    border-bottom-color: var(--tint);
+    color: var(--color-foreground);
+  }
+</style>

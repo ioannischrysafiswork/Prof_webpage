@@ -1,0 +1,234 @@
+---
+/**
+ * Certifications on /work: a ledger-style list (name, issuer, issue date, optional expiry,
+ * credential ID and a "Verify" link), newest first. Two columns from 48rem; a compact
+ * two-column block in print. Each item has a stable anchor `certification-<id>`.
+ */
+import type { CollectionEntry } from 'astro:content';
+import { Icon } from 'astro-icon/components';
+import ChipList from '@/components/ui/ChipList.astro';
+import { formatDate, sortByDateDesc, toDateTimeAttr } from '@/lib/dates';
+import { hasValue, isExternal, resolveLinks } from './links';
+
+interface Props {
+  entries: readonly CollectionEntry<'certifications'>[];
+  headingLevel?: 3 | 4;
+}
+
+const { entries, headingLevel = 3 } = Astro.props;
+const Heading = `h${headingLevel}` as 'h3' | 'h4';
+
+const items = sortByDateDesc(entries, ({ data }) => ({
+  start: data.date,
+  end: data.date,
+  order: data.order,
+})).map(({ id, data }) => {
+  const [verify] = resolveLinks(data.links, { order: ['credential'] });
+  const others = resolveLinks(data.links, { order: ['website', 'pdf', 'report'] });
+  return {
+    id,
+    data,
+    anchor: `certification-${id}`,
+    date: { label: formatDate(data.date), attr: toDateTimeAttr(data.date) },
+    expires: data.expires
+      ? { label: formatDate(data.expires), attr: toDateTimeAttr(data.expires) }
+      : undefined,
+    credentialId: data.credentialId?.trim() || undefined,
+    verify,
+    others,
+  };
+});
+---
+
+<ul class="certs">
+  {items.map((item) => (
+    <li id={item.anchor} class="cert">
+      <article class="cert__body" aria-labelledby={`${item.anchor}-title`}>
+        <div class="cert__head">
+          <Heading id={`${item.anchor}-title`} class="cert__name">
+            {item.data.name}
+          </Heading>
+          <p class="cert__date">
+            <span class="sr-only">Issued </span>
+            {item.date.attr ? (
+              <time datetime={item.date.attr}>{item.date.label}</time>
+            ) : (
+              <span>{item.date.label}</span>
+            )}
+          </p>
+        </div>
+        <p class="cert__issuer">{item.data.issuer}</p>
+        {item.expires && (
+          <p class="cert__meta">
+            Valid until{' '}
+            {item.expires.attr ? (
+              <time datetime={item.expires.attr}>{item.expires.label}</time>
+            ) : (
+              <span>{item.expires.label}</span>
+            )}
+          </p>
+        )}
+        {item.data.summary && <p class="cert__summary">{item.data.summary}</p>}
+        <ChipList
+          items={item.data.tech}
+          size="sm"
+          label={hasValue(item.data.name) ? `Topics: ${item.data.name}` : 'Topics'}
+        />
+        {(item.credentialId || item.verify || item.others.length > 0) && (
+          <p class="cert__footer">
+            {item.credentialId && (
+              <span class="cert__id">
+                Credential ID <span class="cert__id-value">{item.credentialId}</span>
+              </span>
+            )}
+            {item.verify && (
+              <a href={item.verify.href} class="link cert__link">
+                Verify
+                <span class="sr-only"> {item.data.name}</span>
+                {isExternal(item.verify.href) && (
+                  <Icon name="lucide:arrow-up-right" class="cert__icon" aria-hidden="true" />
+                )}
+              </a>
+            )}
+            {item.others.map((link) => (
+              <a href={link.href} class="link cert__link">
+                {link.label}
+                <span class="sr-only"> for {item.data.name}</span>
+              </a>
+            ))}
+          </p>
+        )}
+      </article>
+    </li>
+  ))}
+</ul>
+
+<style>
+  .certs {
+    display: grid;
+    column-gap: var(--space-xl);
+  }
+
+  @media (width >= 48rem) {
+    .certs {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  /* Ledger rows: hairline on top with a short tinted tab (notebook detail). */
+  .cert {
+    position: relative;
+    padding-block: var(--space-md) var(--space-lg);
+    border-top: var(--rule-width) solid var(--color-border);
+  }
+
+  .cert::before {
+    content: '';
+    position: absolute;
+    top: calc(var(--rule-width) * -1);
+    left: 0;
+    width: var(--space-lg);
+    border-top: var(--rule-width-strong) solid var(--tint);
+  }
+
+  .cert__body {
+    display: grid;
+    gap: var(--space-2xs);
+  }
+
+  .cert__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0 var(--space-md);
+  }
+
+  .cert__name {
+    min-width: 0;
+    font-size: var(--text-lg);
+    line-height: var(--text-lg--line-height);
+    letter-spacing: 0;
+  }
+
+  .cert__date,
+  .cert__meta,
+  .cert__footer {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    line-height: var(--text-xs--line-height);
+    color: var(--color-muted);
+  }
+
+  .cert__date {
+    color: var(--color-foreground);
+  }
+
+  .cert__issuer {
+    font-size: var(--text-sm);
+    font-weight: 500;
+  }
+
+  .cert__summary {
+    font-size: var(--text-sm);
+    color: var(--color-muted);
+  }
+
+  .cert__body :global(.chip-list) {
+    margin-top: var(--space-2xs);
+  }
+
+  .cert__footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0 var(--space-md);
+    margin-top: var(--space-2xs);
+  }
+
+  .cert__id-value {
+    color: var(--color-foreground);
+    overflow-wrap: anywhere;
+  }
+
+  .cert__link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2xs);
+    min-height: var(--size-mark);
+    font-family: var(--font-sans);
+    font-size: var(--text-sm);
+  }
+
+  .cert__icon {
+    width: var(--size-icon-sm);
+    height: var(--size-icon-sm);
+  }
+
+  @media print {
+    .certs {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      column-gap: var(--space-xl);
+    }
+
+    .cert {
+      padding-block: var(--print-gap);
+      break-inside: avoid;
+    }
+
+    .cert::before {
+      display: none;
+    }
+
+    .cert__icon {
+      display: none;
+    }
+
+    .cert__link {
+      display: inline;
+      min-height: auto;
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+    }
+  }
+</style>

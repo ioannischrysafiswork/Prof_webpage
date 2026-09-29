@@ -1,0 +1,42 @@
+---
+/**
+ * `Sep 2019 – Jul 2023` with machine-readable <time> elements (mono).
+ * Accepts ISO `YYYY-MM` / `YYYY`, `present`, or TODO placeholders (shown as-is in drafts).
+ * A missing start shows the end date alone; equal dates collapse to one.
+ */
+import { formatDate, toDateTimeAttr } from '@/lib/dates';
+import { present } from './academic';
+
+interface Props {
+  start?: string | null;
+  end?: string | null;
+  class?: string;
+}
+
+const { start, end, class: className } = Astro.props;
+const values = [start, end].filter(present);
+const unique = values.filter((value, index) => formatDate(value) !== formatDate(values[index - 1]));
+---
+
+{unique.length > 0 && (
+  <span class:list={['date-range', className]}>
+    {unique.map((value, index) => (
+      <>
+        {index > 0 && ' – '}
+        {toDateTimeAttr(value) ? (
+          <time datetime={toDateTimeAttr(value)}>{formatDate(value)}</time>
+        ) : (
+          <span>{formatDate(value)}</span>
+        )}
+      </>
+    ))}
+  </span>
+)}
+
+<style>
+  .date-range {
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    line-height: var(--text-sm--line-height);
+  }
+</style>

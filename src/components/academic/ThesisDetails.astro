@@ -1,0 +1,218 @@
+---
+/**
+ * Body of one thesis on /academic (#bachelor-thesis, #master-thesis), rendered from
+ * `src/content/theses/*.mdx`: facts (supervision, institution, dates, grade, methods,
+ * tools), abstract, key figure, key result, highlights, the MDX body (may contain KaTeX
+ * maths and science components) and a "Read the thesis (PDF)" link.
+ * The page wraps it in a level-3 <Section as="article">.
+ */
+import { render } from 'astro:content';
+import ChipList from '@/components/ui/ChipList.astro';
+import LinkButton from '@/components/ui/LinkButton.astro';
+import Prose from '@/components/ui/Prose.astro';
+import DateRange from './DateRange.astro';
+import Fact from './Fact.astro';
+import FactList from './FactList.astro';
+import Highlights from './Highlights.astro';
+import KeyFigure from './KeyFigure.astro';
+import LinkRow from './LinkRow.astro';
+import { hasBody, hasText, paragraphs, present, toLinks, type ThesisEntry } from './academic';
+
+interface Props {
+  entry: ThesisEntry;
+  /** Anchor (without #) used for sub-heading ids, e.g. "master-thesis". */
+  anchor: string;
+  /** The degree this thesis was written for, if on the page. */
+  degree?: { title: string; anchor: string };
+}
+
+const { entry, anchor, degree } = Astro.props;
+const { data } = entry;
+const { Content } = hasBody(entry) ? await render(entry) : { Content: undefined };
+
+const pdf = hasText(data.links.pdf) ? toLinks({ pdf: data.links.pdf })[0] : undefined;
+const otherLinks = toLinks(data.links, {}, ['pdf']);
+const institution = [data.institution, data.department].filter(present).join(', ');
+const abstract = paragraphs(data.abstract);
+const figure = data.images[0];
+---
+
+<div class="thesis">
+  <FactList label={`${data.title}: details`}>
+    <Fact label="Supervisor">{data.supervisor}</Fact>
+    {data.coSupervisors.length > 0 && (
+      <Fact label={data.coSupervisors.length > 1 ? 'Co-supervisors' : 'Co-supervisor'}>
+        {data.coSupervisors.join('; ')}
+      </Fact>
+    )}
+    <Fact label="Institution">{institution}</Fact>
+    <Fact label={present(data.start) ? 'Period' : 'Completed'}>
+      <DateRange start={data.start} end={data.end} />
+    </Fact>
+    {degree && (
+      <Fact label="Degree">
+        <a href={`#${degree.anchor}`} class="link">
+          {degree.title}
+        </a>
+      </Fact>
+    )}
+    {present(data.grade) && <Fact label="Grade">{data.grade}</Fact>}
+    {data.methods.length > 0 && (
+      <Fact label="Methods">
+        <ChipList items={data.methods} label="Methods" size="sm" variant="outline" />
+      </Fact>
+    )}
+    {data.tech.length > 0 && (
+      <Fact label="Tools">
+        <ChipList items={data.tech} label="Tools and software" size="sm" />
+      </Fact>
+    )}
+  </FactList>
+
+  <section class="thesis__block" aria-labelledby={`${anchor}-abstract`}>
+    <h4 id={`${anchor}-abstract`} class="thesis__label">
+      Abstract
+    </h4>
+    <div class="thesis__abstract">
+      {abstract.map((paragraph) => (
+        <p>{paragraph}</p>
+      ))}
+    </div>
+  </section>
+
+  {present(data.keyResult) && (
+    <section class="thesis__block" aria-labelledby={`${anchor}-result`}>
+      <h4 id={`${anchor}-result`} class="thesis__label">
+        Key result
+      </h4>
+      <p class="thesis__result">{data.keyResult}</p>
+    </section>
+  )}
+
+  {(figure || data.highlights.length > 0 || Content || pdf || otherLinks.length > 0) && (
+    <div class="thesis__indent">
+      {figure && <KeyFigure image={figure} label={figure.caption ? 'Key figure.' : undefined} />}
+
+      <Highlights items={data.highlights} label="Highlights" />
+
+      {Content && (
+        <Prose class="thesis__body">
+          <Content />
+        </Prose>
+      )}
+
+      {(pdf || otherLinks.length > 0) && (
+        <div class="thesis__actions">
+          {pdf && (
+            <LinkButton href={pdf.href} icon="lucide:file-text" iconPosition="start">
+              Read the thesis (PDF)
+            </LinkButton>
+          )}
+          <LinkRow links={otherLinks} label={`Other links: ${data.title}`} />
+        </div>
+      )}
+    </div>
+  )}
+</div>
+
+<style>
+  .thesis {
+    display: grid;
+    gap: var(--space-lg);
+  }
+
+  /* Labelled blocks (abstract, key result) and the rest of the entry share the fact
+     list's columns from 48rem: label left, content in the value column. */
+  .thesis__block {
+    display: grid;
+    gap: var(--space-xs);
+    min-width: 0;
+  }
+
+  .thesis__block > :not(.thesis__label),
+  .thesis__indent {
+    max-width: var(--container-measure);
+  }
+
+  .thesis__indent {
+    display: grid;
+    gap: var(--space-lg);
+    min-width: 0;
+  }
+
+  @media (width >= 48rem) {
+    .thesis__block {
+      grid-template-columns: var(--tl-date-col) minmax(0, 1fr);
+      column-gap: var(--tl-rail);
+      align-items: baseline;
+    }
+
+    .thesis__block > .thesis__label {
+      text-align: right;
+    }
+
+    .thesis__indent {
+      margin-left: calc(var(--tl-date-col) + var(--tl-rail));
+    }
+  }
+
+  .thesis__label {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    line-height: var(--text-xs--line-height);
+    font-weight: 400;
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
+    color: var(--color-muted);
+  }
+
+  .thesis__abstract {
+    display: grid;
+    gap: var(--spacing-stack);
+    font-family: var(--font-serif);
+    font-size: var(--text-lg);
+    line-height: var(--leading-body);
+  }
+
+  /* A quiet margin note: tinted rule on the left, no fill. */
+  .thesis__result {
+    padding-left: var(--space-md);
+    border-left: var(--rule-width-strong) solid var(--tint);
+  }
+
+  .thesis__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-sm) var(--space-lg);
+  }
+
+  @media print {
+    .thesis,
+    .thesis__indent {
+      gap: var(--space-sm);
+    }
+
+    .thesis__block {
+      grid-template-columns: var(--tl-date-col) minmax(0, 1fr);
+      column-gap: var(--space-lg);
+      align-items: baseline;
+    }
+
+    .thesis__block > .thesis__label {
+      text-align: right;
+    }
+
+    .thesis__indent {
+      margin-left: calc(var(--tl-date-col) + var(--space-lg));
+    }
+
+    .thesis__abstract {
+      font-size: inherit;
+    }
+
+    .thesis__result {
+      border-left-color: var(--color-border-strong);
+    }
+  }
+</style>

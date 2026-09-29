@@ -1,0 +1,165 @@
+---
+/**
+ * Card for one exercise, assignment, project or simulation (`src/content/academic-work/`):
+ * type badge (eyebrow), course · institution · dates, the physical problem (summary),
+ * numerical methods, highlights, optional key figure, tools and links (code / report…).
+ * A longer MDX write-up, if present, sits in a collapsed "Write-up" disclosure.
+ */
+import { render } from 'astro:content';
+import { Icon } from 'astro-icon/components';
+import Card from '@/components/ui/Card.astro';
+import ChipList from '@/components/ui/ChipList.astro';
+import Prose from '@/components/ui/Prose.astro';
+import Highlights from './Highlights.astro';
+import KeyFigure from './KeyFigure.astro';
+import LinkRow from './LinkRow.astro';
+import {
+  dateRange,
+  hasBody,
+  present,
+  toLinks,
+  workTypeLabel,
+  type AcademicWorkEntry,
+} from './academic';
+
+interface Props {
+  entry: AcademicWorkEntry;
+  /** Stable id for deep links, e.g. "project-ising-model". */
+  id?: string;
+  headingLevel?: 3 | 4;
+  as?: 'article' | 'div' | 'li';
+}
+
+const { entry, id, headingLevel = 3, as = 'article' } = Astro.props;
+const { data } = entry;
+const { Content } = hasBody(entry) ? await render(entry) : { Content: undefined };
+
+const meta = [data.course, data.institution, dateRange(data.start, data.end)]
+  .filter(present)
+  .join(' · ');
+const links = toLinks(data.links);
+const figure = data.images[0];
+---
+
+<Card
+  as={as}
+  id={id}
+  title={data.title}
+  headingLevel={headingLevel}
+  eyebrow={workTypeLabel(entry)}
+  meta={meta || undefined}
+  class="aw-card"
+>
+  {figure && (
+    <KeyFigure
+      slot="media"
+      image={figure}
+      compact
+      sizes="(min-width: 64rem) 24rem, (min-width: 48rem) 45vw, 100vw"
+    />
+  )}
+
+  <p class="aw-card__summary">{data.summary}</p>
+
+  {data.methods.length > 0 && (
+    <p class="aw-card__methods">
+      <span class="aw-card__label">{data.methods.length > 1 ? 'Methods' : 'Method'}</span>
+      <span>{data.methods.join(' · ')}</span>
+    </p>
+  )}
+
+  <Highlights items={data.highlights} label="Highlights" />
+
+  {Content && (
+    <details class="aw-card__more">
+      <summary class="aw-card__toggle">
+        <span>Write-up</span>
+        <span class="sr-only">: {data.title}</span>
+        <Icon name="lucide:chevron-down" class="aw-card__toggle-icon" aria-hidden="true" />
+      </summary>
+      <Prose class="aw-card__prose">
+        <Content />
+      </Prose>
+    </details>
+  )}
+
+  <Fragment slot="footer">
+    <ChipList items={data.tech} label="Tools" size="sm" />
+    <LinkRow links={links} label={`Links: ${data.title}`} />
+  </Fragment>
+</Card>
+
+<style>
+  .aw-card__summary {
+    color: var(--color-foreground);
+  }
+
+  .aw-card__methods {
+    display: grid;
+    gap: var(--space-2xs);
+    font-size: var(--text-sm);
+    line-height: var(--text-sm--line-height);
+  }
+
+  .aw-card__label {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
+  }
+
+  .aw-card__more {
+    margin-top: var(--space-xs);
+    /* Above Card's stretched link, if one is ever added. */
+    position: relative;
+    z-index: 1;
+  }
+
+  .aw-card__toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2xs);
+    min-height: var(--size-mark);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
+    color: var(--color-muted);
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .aw-card__toggle::-webkit-details-marker {
+    display: none;
+  }
+
+  .aw-card__toggle:hover {
+    color: var(--color-foreground);
+  }
+
+  .aw-card__toggle-icon {
+    width: var(--size-icon-sm);
+    height: var(--size-icon-sm);
+    transition: rotate var(--duration-base) var(--ease-emphasized);
+  }
+
+  .aw-card__more[open] .aw-card__toggle-icon {
+    rotate: 180deg;
+  }
+
+  .aw-card__prose {
+    padding-top: var(--space-xs);
+    font-size: var(--text-sm);
+  }
+
+  @media print {
+    /* <details> print expanded (global.css); the toggle itself is screen-only. */
+    .aw-card__toggle {
+      display: none;
+    }
+
+    .aw-card__prose {
+      padding-top: 0;
+    }
+  }
+</style>

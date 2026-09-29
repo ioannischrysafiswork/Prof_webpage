@@ -1,0 +1,94 @@
+---
+/**
+ * Beyond work & academia (`#interests`): hobbies and interests from interests.yaml,
+ * shown as short notebook entries (icon or index number, name, a personal phrase),
+ * never as a cloud of buzzwords. Renders nothing if the collection is empty.
+ */
+import { getCollection } from 'astro:content';
+import { Icon } from 'astro-icon/components';
+import Section from '@/components/ui/Section.astro';
+import Reveal from '@/components/ui/Reveal.astro';
+
+const interests = (await getCollection('interests')).sort(
+  (a, b) => a.data.order - b.data.order || a.data.name.localeCompare(b.data.name),
+);
+---
+
+{interests.length > 0 && (
+  <Section id="interests" eyebrow="Outside work" title="Beyond work & academia">
+    <ul class="interests">
+      {interests.map(({ data }, index) => (
+        <Reveal as="li" stagger={index % 3} class="interest">
+          <span class="interest__mark" aria-hidden="true">
+            {data.icon ? <Icon name={data.icon} /> : String(index + 1).padStart(2, '0')}
+          </span>
+          <div class="interest__text">
+            <h3 class="interest__name">{data.name}</h3>
+            {data.note && <p class="interest__note">{data.note}</p>}
+          </div>
+        </Reveal>
+      ))}
+    </ul>
+  </Section>
+)}
+
+<style>
+  .interests {
+    display: grid;
+    gap: var(--space-lg) var(--space-xl);
+  }
+
+  @media (width >= 40rem) {
+    .interests {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (width >= 64rem) {
+    .interests {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  .interests :global(.interest) {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: start;
+    gap: var(--space-md);
+    padding-top: var(--space-md);
+    border-top: var(--rule-width) solid var(--color-border);
+  }
+
+  .interest__mark {
+    display: grid;
+    place-items: center;
+    width: var(--size-target);
+    height: var(--size-target);
+    border: var(--rule-width) solid var(--color-border);
+    border-radius: var(--radius-md);
+    background-color: var(--color-sunken);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    line-height: 1;
+    color: var(--tint);
+  }
+
+  .interest__mark :global(svg) {
+    width: var(--size-icon);
+    height: var(--size-icon);
+  }
+
+  .interest__text {
+    display: grid;
+    gap: var(--space-2xs);
+  }
+
+  .interest__name {
+    font-size: var(--text-lg);
+    line-height: var(--text-lg--line-height);
+  }
+
+  .interest__note {
+    color: var(--color-muted);
+  }
+</style>

@@ -1,0 +1,346 @@
+---
+/**
+ * HeroField: decorative background for the Home hero (aria-hidden, never content).
+ *
+ * A lattice of particles resting on the graph-paper grid (--grid-size), displaced by two
+ * coherent longitudinal waves from point sources, so the interference pattern appears as
+ * slowly travelling bands of compression. An illustrative motif, not a simulation result.
+ *
+ * - Colour: the accent (or the section tint), resolved at runtime from CSS tokens, so it
+ *   follows light/dark, the theme toggle (html[data-theme]) and ClientRouter page swaps.
+ * - Motion: at most 30 fps, paused off-screen and in hidden tabs; a single static frame
+ *   under prefers-reduced-motion. Survives <ClientRouter />: loops are torn down on
+ *   `astro:before-swap` and re-mounted on `astro:page-load`.
+ * - No JS / no canvas: a static CSS dot lattice (same grid) is shown instead.
+ * - No layout shift: `layout="fill"` is absolutely positioned; `layout="box"` reserves a
+ *   fixed aspect ratio. Hidden in print ([data-decorative]).
+ *
+ *   <!-- behind a hero: the parent needs `position: relative; isolation: isolate` -->
+ *   <HeroField />
+ *   <!-- as a visual block, e.g. in <PageHeader><Fragment slot="aside"> -->
+ *   <HeroField layout="box" aspect="4 / 3" />
+ */
+import type { Tint } from '@/lib/site';
+
+interface Props {
+  /** "fill": absolute layer covering the nearest positioned ancestor (default). "box": block with a fixed aspect ratio. */
+  layout?: 'fill' | 'box';
+  /** CSS aspect-ratio for layout="box". Default "4 / 3". */
+  aspect?: string;
+  /** Fade mask: "edge" fades towards the text (left on wide screens, bottom on phones); "radial" fades all edges; "none". Default: "edge" for fill, "radial" for box. */
+  mask?: 'edge' | 'radial' | 'none';
+  /** Ink colour: the accent (default) or a section tint (sets data-tint). */
+  tint?: Tint;
+  class?: string;
+}
+
+const { layout = 'fill', aspect = '4 / 3', tint, class: className } = Astro.props;
+const mask = Astro.props.mask ?? (layout === 'fill' ? 'edge' : 'radial');
+---
+
+<div
+  class:list={['hero-field', `hero-field--${layout}`, `hero-field--mask-${mask}`, className]}
+  style={layout === 'box' ? `aspect-ratio: ${aspect}` : undefined}
+  data-hero-field
+  data-tint={tint}
+  data-decorative
+  aria-hidden="true"
+>
+  <canvas class="hero-field__canvas"></canvas>
+</div>
+
+<style>
+  .hero-field {
+    --hf-ink: var(--color-accent);
+    --hf-opacity: 0.6;
+    position: relative;
+    overflow: hidden;
+    pointer-events: none;
+    user-select: none;
+    color: var(--hf-ink);
+  }
+
+  .hero-field[data-tint] {
+    --hf-ink: var(--tint);
+  }
+
+  .hero-field--fill {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+  }
+
+  .hero-field--box {
+    width: 100%;
+  }
+
+  /* Static fallback (no JS, no canvas, or until the first frame): a plain dot lattice. */
+  .hero-field::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(circle, currentColor 1px, transparent 1.5px);
+    background-size: var(--grid-size) var(--grid-size);
+    background-position: calc(var(--grid-size) / -2) calc(var(--grid-size) / -2);
+    opacity: calc(var(--hf-opacity) * 0.6);
+    transition: opacity var(--duration-slow) var(--ease-standard);
+  }
+
+  .hero-field__canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    color: var(--hf-ink); /* read at runtime: resolves light-dark() to a concrete colour */
+    opacity: 0;
+    transition: opacity var(--duration-slow) var(--ease-standard);
+  }
+
+  .hero-field[data-ready]::before {
+    opacity: 0;
+  }
+
+  .hero-field[data-ready] .hero-field__canvas {
+    opacity: var(--hf-opacity);
+  }
+
+  /* Fade masks keep the field away from the text and soften the far edges.
+     Phones: the text covers the hero, so keep the field faint and in the top corner. */
+  .hero-field--mask-edge {
+    --hf-opacity: 0.4;
+    mask-image: radial-gradient(ellipse 110% 55% at 100% 0%, black 10%, transparent 100%);
+  }
+
+  @media (width >= 48rem) {
+    .hero-field--mask-edge {
+      --hf-opacity: 0.6;
+      mask-image:
+        linear-gradient(to right, transparent 30%, black 80%),
+        linear-gradient(to bottom, black 75%, transparent);
+      mask-composite: intersect;
+    }
+  }
+
+  .hero-field--mask-radial {
+    mask-image: radial-gradient(closest-side, black 55%, transparent 100%);
+  }
+</style>
+
+<script>
+  interface Field {
+    el: HTMLElement;
+    update(): void;
+    recolor(): void;
+    destroy(): void;
+  }
+
+  const fields = new Map<HTMLElement, Field>();
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const TAU = Math.PI * 2;
+  const PERIOD = 6; // s, one wave period
+  const LAMBDA = 6; // wavelength in grid cells
+  const MAX_PARTICLES = 6000; // above this, one particle per grid node instead of two
+  const FRAME_MS = 30; // ≈ 30 fps cap
+  const LEVELS = 4; // alpha buckets (one fill per bucket)
+  const wideMedia = window.matchMedia('(width >= 48rem)');
+
+  function mount(el: HTMLElement): Field | undefined {
+    const canvas = el.querySelector('canvas');
+    const ctx = canvas?.getContext('2d');
+    if (!canvas || !ctx) return;
+
+    let w = 0;
+    let h = 0;
+    let cell = 24;
+    let gap = 12;
+    let color = '';
+    // Per particle: rest x, y, then per source: amplitude, unit vector x, y, phase k·r.
+    let data = new Float32Array(0);
+    let raf = 0;
+    let last = 0;
+    let t = 1.3; // phase of the static frame
+    let onScreen = false;
+
+    const layout = (): void => {
+      const rect = el.getBoundingClientRect();
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      w = rect.width;
+      h = rect.height;
+      canvas.width = Math.round(w * dpr);
+      canvas.height = Math.round(h * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      const size = getComputedStyle(el).getPropertyValue('--grid-size').trim();
+      const root = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+      cell = (parseFloat(size) || 1.5) * (size.endsWith('px') ? 1 : root);
+
+      const lambda = LAMBDA * cell;
+      const k = TAU / lambda;
+      const wide = w >= h;
+      // Two coherent sources near the far edge (right on wide boxes, top on tall ones).
+      const sources = wide
+        ? [
+            [w * 0.84, h * 0.5 - lambda * 0.9],
+            [w * 0.84, h * 0.5 + lambda * 0.9],
+          ]
+        : [
+            [w * 0.5 - lambda * 0.9, h * 0.12],
+            [w * 0.5 + lambda * 0.9, h * 0.12],
+          ];
+      gap = (w * h * 4) / (cell * cell) > MAX_PARTICLES ? cell : cell / 2;
+      // Skip particles hidden by the CSS fade mask (same geometry as the styles above).
+      const list = el.classList;
+      const visible = list.contains('hero-field--mask-radial')
+        ? (x: number, y: number) => Math.hypot(x - w / 2, y - h / 2) < Math.min(w, h) / 2
+        : !list.contains('hero-field--mask-edge')
+          ? () => true
+          : wideMedia.matches
+            ? (x: number) => x > w * 0.3 - gap
+            : (x: number, y: number) => ((w - x) / (1.1 * w)) ** 2 + (y / (0.55 * h)) ** 2 < 1;
+      const cols = Math.ceil(w / gap) + 1;
+      const rows = Math.ceil(h / gap) + 1;
+      data = new Float32Array(cols * rows * 10);
+      let i = 0;
+      for (let row = 0; row < rows; row++) {
+        for (let col = 0; col < cols; col++) {
+          const x = col * gap;
+          const y = row * gap;
+          if (!visible(x, y)) continue;
+          data[i++] = x;
+          data[i++] = y;
+          for (const [sx, sy] of sources) {
+            const dx = x - sx;
+            const dy = y - sy;
+            const r = Math.hypot(dx, dy) || 1;
+            data[i++] = 1 / Math.sqrt(1 + r / lambda); // cylindrical decay
+            data[i++] = dx / r;
+            data[i++] = dy / r;
+            data[i++] = k * r;
+          }
+        }
+      }
+      data = data.subarray(0, i);
+    };
+
+    const draw = (): void => {
+      ctx.clearRect(0, 0, w, h);
+      if (!color) return;
+      const phase = (TAU * t) / PERIOD;
+      const amp = gap * 0.4;
+      const paths = Array.from({ length: LEVELS }, () => new Path2D());
+      for (let i = 0; i < data.length; i += 10) {
+        let ux = 0;
+        let uy = 0;
+        let c = 0;
+        for (let j = i + 2; j < i + 10; j += 4) {
+          const a = data[j];
+          const arg = data[j + 3] - phase;
+          const s = a * Math.sin(arg);
+          ux += s * data[j + 1];
+          uy += s * data[j + 2];
+          c += a * Math.cos(arg);
+        }
+        const q = Math.max(0, Math.min(1, 0.5 + c * 0.35)); // 0…1 compression
+        const x = data[i] + ux * amp;
+        const y = data[i + 1] + uy * amp;
+        const r = 0.4 + q * q * 1.4;
+        const path = paths[Math.min(LEVELS - 1, Math.floor(q * LEVELS))];
+        path.moveTo(x + r, y);
+        path.arc(x, y, r, 0, TAU);
+      }
+      ctx.fillStyle = color;
+      paths.forEach((path, level) => {
+        ctx.globalAlpha = 0.1 + (0.9 * (level + 1)) / LEVELS;
+        ctx.fill(path);
+      });
+      ctx.globalAlpha = 1;
+      if (!('ready' in el.dataset)) el.dataset.ready = '';
+    };
+
+    const frame = (now: number): void => {
+      raf = requestAnimationFrame(frame);
+      const dt = now - last;
+      if (dt < FRAME_MS) return;
+      t += Math.min(dt, 100) / 1000; // no jump after a pause
+      last = now;
+      draw();
+    };
+
+    const update = (): void => {
+      const run = onScreen && !reduced.matches && !document.hidden;
+      if (run && !raf) {
+        last = performance.now();
+        raf = requestAnimationFrame(frame);
+      } else if (!run && raf) {
+        cancelAnimationFrame(raf);
+        raf = 0;
+      }
+    };
+
+    const recolor = (): void => {
+      color = getComputedStyle(canvas).color;
+      if (!raf) draw();
+    };
+
+    const resize = new ResizeObserver(() => {
+      layout();
+      draw();
+    });
+    const visibility = new IntersectionObserver(([entry]) => {
+      onScreen = entry.isIntersecting;
+      update();
+    });
+    resize.observe(el);
+    visibility.observe(el);
+    color = getComputedStyle(canvas).color;
+
+    return {
+      el,
+      update,
+      recolor,
+      destroy() {
+        cancelAnimationFrame(raf);
+        raf = 0;
+        resize.disconnect();
+        visibility.disconnect();
+      },
+    };
+  }
+
+  function each(fn: (field: Field) => void): void {
+    fields.forEach(fn);
+  }
+
+  function init(): void {
+    fields.forEach((field, el) => {
+      if (el.isConnected) return;
+      field.destroy();
+      fields.delete(el);
+    });
+    document.querySelectorAll<HTMLElement>('[data-hero-field]').forEach((el) => {
+      if (fields.has(el)) return;
+      const field = mount(el);
+      if (field) fields.set(el, field);
+    });
+  }
+
+  function teardown(): void {
+    each((field) => field.destroy());
+    fields.clear();
+  }
+
+  // Global listeners, registered once for the lifetime of the document.
+  init();
+  document.addEventListener('astro:page-load', init);
+  document.addEventListener('astro:before-swap', teardown);
+  document.addEventListener('astro:after-swap', () => each((field) => field.recolor()));
+  document.addEventListener('visibilitychange', () => each((field) => field.update()));
+  reduced.addEventListener('change', () => each((field) => field.update()));
+  window
+    .matchMedia('(prefers-color-scheme: dark)')
+    .addEventListener('change', () => each((field) => field.recolor()));
+  new MutationObserver(() => each((field) => field.recolor())).observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ['data-theme', 'data-page'],
+  });
+</script>

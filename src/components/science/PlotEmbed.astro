@@ -1,0 +1,105 @@
+---
+/**
+ * PlotEmbed: a theme-aware plot exported with the scientific-figures skill
+ * (`save_themed_svg`), inlined so ink (`currentColor`) and series colours
+ * (`var(--plot-1…6)`) switch with light/dark mode. Zero client JS unless enlarge is used
+ * (shared with Figure).
+ *
+ *   ---
+ *   import decay from '@/assets/science/decay.svg?raw';
+ *   ---
+ *   <PlotEmbed svg={decay} alt="Amplitude decays exponentially; the fit matches all three runs." number={3} caption="…" />
+ *
+ * Matplotlib writes font names (Inter, DejaVu Sans, cmr10/cmmi10 for mathtext) that
+ * visitors may not have installed; they are mapped to the site fonts here. Only plot real
+ * data/results, or say "Illustrative" in the caption.
+ */
+import Figure from './Figure.astro';
+
+interface Props {
+  /** Raw SVG from `import x from '…svg?raw'`. */
+  svg: string;
+  /** What the plot shows (axes, trend, key finding), for screen readers. */
+  alt: string;
+  caption?: string;
+  number?: number | string;
+  prefix?: string;
+  credit?: string;
+  creditHref?: string;
+  id?: string;
+  /** Click-to-enlarge. Default true. */
+  enlarge?: boolean;
+  /** Surface + border around the plot. Default true. */
+  framed?: boolean;
+  /** Keep the plot at least this wide and scroll inside the figure on phones, e.g. "30rem". */
+  minWidth?: string;
+  /** Render only the plot (no <figure>, caption or enlarge), e.g. inside a card. */
+  bare?: boolean;
+  class?: string;
+}
+
+const {
+  svg,
+  alt,
+  minWidth,
+  bare = false,
+  class: className,
+  enlarge = true,
+  framed = true,
+  ...figureProps
+} = Astro.props;
+const style = minWidth ? `--plot-min-width: ${minWidth}` : undefined;
+---
+
+<div class:list={['plot', { 'plot--min': minWidth }, className]} style={style}>
+  {bare ? (
+    <Figure
+      svg={svg}
+      alt={alt}
+      enlarge={false}
+      framed={false}
+      mediaClass="plot__media"
+      class="plot__bare"
+    />
+  ) : (
+    <Figure
+      svg={svg}
+      alt={alt}
+      enlarge={enlarge}
+      framed={framed}
+      mediaClass="plot__media"
+      {...figureProps}
+    />
+  )}
+</div>
+
+<style>
+  .plot :global(.plot__bare) {
+    margin: 0;
+  }
+
+  .plot--min :global(.plot__media) {
+    overflow-x: auto;
+    scrollbar-width: thin;
+  }
+
+  .plot--min :global(.plot__media > svg) {
+    min-width: var(--plot-min-width);
+  }
+
+  /* Matplotlib font names → site fonts (inline styles need !important). The enlarged
+     copy in the <dialog> is still a DOM descendant of .plot, so it matches too. */
+  .plot :global(svg text),
+  .plot :global(svg tspan) {
+    font-family: var(--font-sans) !important;
+    font-feature-settings: 'tnum' 1;
+  }
+
+  .plot :global(svg [style*="'cm"]) {
+    font-family: var(--font-serif) !important;
+  }
+
+  .plot :global(svg [style*='cmmi']) {
+    font-style: italic;
+  }
+</style>

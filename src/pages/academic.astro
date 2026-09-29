@@ -1,58 +1,402 @@
 ---
 /**
- * Academic — `/academic` (CLAUDE.md §2.3). Permanent route, printed in academic CVs.
- * Skeleton wired to the design system: academic-page-builder fills in each section.
- * Stable anchors: #about, #roadmap, #degrees (#bachelor-degree, #master-degree),
- * #qualifications, #theses (#bachelor-thesis, #master-thesis), #projects, #other.
+ * Academic — `/academic` (CLAUDE.md §2.3). Permanent route, printed in academic CVs and
+ * sent to professors, so it must stand on its own: intro, contact, roadmap, degrees,
+ * other qualifications, theses, academic work & simulations, other academic work.
+ *
+ * Stable anchors (never rename): #about, #roadmap, #degrees (#bachelor-degree,
+ * #master-degree), #qualifications, #theses (#bachelor-thesis, #master-thesis),
+ * #projects, #other. Degree / thesis anchors come from the content `anchor` field.
+ *
+ * All data comes from content collections (education, theses, academicWork, profile).
+ * Zero page-specific JavaScript: the roadmap uses <details>, the project filter is CSS-only.
  */
 import { getCollection } from 'astro:content';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import PageHeader from '@/components/ui/PageHeader.astro';
 import Section from '@/components/ui/Section.astro';
+import LinkButton from '@/components/ui/LinkButton.astro';
 import Timeline from '@/components/timeline/Timeline.astro';
 import TimelineItem from '@/components/timeline/TimelineItem.astro';
+import AcademicJsonLd from '@/components/academic/AcademicJsonLd.astro';
+import AcademicWorkGrid from '@/components/academic/AcademicWorkGrid.astro';
+import ContactLinks from '@/components/academic/ContactLinks.astro';
+import DegreeDetails from '@/components/academic/DegreeDetails.astro';
+import EntryList, { type EntryItem } from '@/components/academic/EntryList.astro';
+import ThesisDetails from '@/components/academic/ThesisDetails.astro';
+import {
+  DEGREE_LABEL,
+  LEVEL_RANK,
+  THESIS_LABEL,
+  hasMaths,
+  hasText,
+  isOtherWork,
+  paragraphs,
+  toLinks,
+  uniqueAnchors,
+  workTypeLabel,
+  type EducationEntry,
+  type ThesisEntry,
+} from '@/components/academic/academic';
 import { getProfile } from '@/lib/profile';
-import { sortByDateAsc } from '@/lib/dates';
+import { sortByDateAsc, sortByDateDesc } from '@/lib/dates';
+import { url } from '@/lib/url';
+import katexStylesheet from 'katex/dist/katex-swap.min.css?url';
 
+const PATH = '/academic';
 const profile = await getProfile();
-const roadmap = sortByDateAsc(await getCollection('education'), (entry) => entry.data);
+
+const [education, theses, academicWork] = await Promise.all([
+  getCollection('education'),
+  getCollection('theses'),
+  getCollection('academicWork'),
+]);
+
+/* ----------------------------------------------------------------- Anchors */
+// Section ids on this page; degree / thesis anchors must never collide with them.
+const usedIds = new Set([
+  'about',
+  'roadmap',
+  'degrees',
+  'qualifications',
+  'theses',
+  'projects',
+  'other',
+]);
+const byLevel = <T extends EducationEntry | ThesisEntry>(a: T, b: T) =>
+  LEVEL_RANK[a.data.level] - LEVEL_RANK[b.data.level];
+
+/* ----------------------------------------------------------------- Degrees */
+// Bachelor → Master → PhD; within a level, chronological (Array.sort is stable).
+const degrees = sortByDateAsc(
+  education.filter((entry) => entry.data.level !== 'other'),
+  (entry) => entry.data,
+).sort(byLevel);
+const degreeAnchors = uniqueAnchors(
+  degrees,
+  (entry) => entry.data.anchor ?? `${entry.data.level}-degree`,
+  usedIds,
+);
+
+/* ------------------------------------------------------------------ Theses */
+const thesisDates = (entry: ThesisEntry) => ({
+  start: entry.data.start ?? entry.data.end,
+  end: entry.data.end,
+  order: entry.data.order,
+});
+const sortedTheses = sortByDateAsc(theses, thesisDates).sort(byLevel);
+const thesisAnchors = uniqueAnchors(sortedTheses, (entry) => entry.data.anchor, usedIds);
+
+// Cross-links: the first degree and the first thesis of the same level belong together.
+const thesisFor = (degree: EducationEntry) =>
+  sortedTheses.find((thesis) => thesis.data.level === degree.data.level);
+const degreeFor = (thesis: ThesisEntry) =>
+  degrees.find((degree) => degree.data.level === thesis.data.level);
+
+/* ---------------------------------------------------------- Qualifications */
+const qualifications: EntryItem[] = sortByDateAsc(
+  education.filter((entry) => entry.data.level === 'other'),
+  (entry) => entry.data,
+).map((entry) => ({
+  key: entry.id,
+  title: entry.data.degree,
+  subtitle: entry.data.institution,
+  meta: [entry.data.location, entry.data.grade],
+  start: entry.data.start,
+  end: entry.data.end,
+  summary: entry.data.summary,
+  highlights: [...entry.data.focus, ...entry.data.highlights],
+  chips: [...entry.data.keyCourses, ...entry.data.tech],
+  chipsLabel: 'Courses and tools',
+  links: toLinks(entry.data.links),
+  entry,
+}));
+
+/* ----------------------------------------------------------- Academic work */
+const projects = sortByDateDesc(
+  academicWork.filter((entry) => !isOtherWork(entry)),
+  (entry) => entry.data,
+);
+const otherWork: EntryItem[] = sortByDateDesc(
+  academicWork.filter(isOtherWork),
+  (entry) => entry.data,
+).map((entry) => ({
+  key: entry.id,
+  badge: workTypeLabel(entry),
+  title: entry.data.title,
+  subtitle: entry.data.institution,
+  meta: [entry.data.course],
+  start: entry.data.start,
+  end: entry.data.end,
+  summary: entry.data.summary,
+  highlights: entry.data.highlights,
+  chips: [...entry.data.methods, ...entry.data.tech],
+  chipsLabel: 'Methods and tools',
+  links: toLinks(entry.data.links),
+  entry,
+}));
+
+/* ----------------------------------------------------------------- Roadmap */
+// Oldest → newest: the page reads as a journey (degrees, theses, qualifications).
+interface RoadmapItem {
+  key: string;
+  title: string;
+  subtitle?: string;
+  meta: (string | undefined)[];
+  start?: string;
+  end?: string;
+  order: number;
+  rank: number;
+  summary?: string;
+  highlights: string[];
+  tech: string[];
+  anchor?: string;
+  anchorLabel: string;
+}
+const roadmapSource: RoadmapItem[] = [
+  ...education.map((entry) => ({
+    key: `education-${entry.id}`,
+    title: entry.data.degree,
+    subtitle: entry.data.institution,
+    meta: [entry.data.location],
+    start: entry.data.start,
+    end: entry.data.end,
+    order: entry.data.order,
+    rank: LEVEL_RANK[entry.data.level] * 2,
+    summary: entry.data.summary,
+    highlights: entry.data.highlights,
+    tech: entry.data.tech,
+    anchor: entry.data.level === 'other' ? 'qualifications' : degreeAnchors.get(entry),
+    anchorLabel: entry.data.level === 'other' ? 'Other qualifications' : 'Degree details',
+  })),
+  ...sortedTheses.map((entry) => ({
+    key: `thesis-${entry.id}`,
+    title: entry.data.title,
+    subtitle: THESIS_LABEL[entry.data.level],
+    meta: [hasText(entry.data.supervisor) ? `Supervisor: ${entry.data.supervisor}` : undefined],
+    ...thesisDates(entry),
+    rank: LEVEL_RANK[entry.data.level] * 2 + 1,
+    summary: undefined,
+    highlights: [],
+    tech: entry.data.tech,
+    anchor: thesisAnchors.get(entry),
+    anchorLabel: 'Thesis details',
+  })),
+];
+// Group-order first (bachelor, its thesis, master, its thesis, …) so undated drafts still
+// read in a sensible order, then let real dates decide (sortByDateAsc is stable).
+const roadmap = sortByDateAsc(
+  [...roadmapSource].sort((a, b) => a.rank - b.rank),
+  (item) => item,
+);
+
+/* ------------------------------------------------------------------- Maths */
+// KaTeX CSS only when a rendered body on this page actually contains TeX maths.
+const needsKatex = [...education, ...theses, ...academicWork].some((entry) => hasMaths(entry.body));
+
+/* ---------------------------------------------------------------- Header */
+const intro = paragraphs(profile.intro.academic);
+const academicCv = hasText(profile.cv.academic) ? url(profile.cv.academic) : undefined;
+const seo = profile.seo.academic;
 ---
 
-<BaseLayout page="academic" path="/academic">
+<BaseLayout page="academic" path={PATH}>
+  <Fragment slot="head">
+    {needsKatex && <link rel="stylesheet" href={katexStylesheet} />}
+    <AcademicJsonLd
+      profile={profile}
+      path={PATH}
+      title={seo.title}
+      description={seo.description}
+      degrees={degrees.map((entry) => ({ entry, anchor: degreeAnchors.get(entry) ?? '' }))}
+      theses={sortedTheses.map((entry) => ({ entry, anchor: thesisAnchors.get(entry) ?? '' }))}
+    />
+  </Fragment>
+
+  <!-- 1. About ------------------------------------------------------------ -->
   <PageHeader id="about" eyebrow={profile.name} title="Academic" lede={profile.headline}>
-    <p>{profile.intro.academic}</p>
+    {intro.map((paragraph) => (
+      <p>{paragraph}</p>
+    ))}
+    <ContactLinks profile={profile} />
+    <Fragment slot="actions">
+      {academicCv && (
+        <LinkButton
+          href={academicCv}
+          variant="primary"
+          icon="lucide:download"
+          iconPosition="start"
+          download
+          data-print="hide"
+        >
+          Download academic CV (PDF)
+        </LinkButton>
+      )}
+      <LinkButton
+        href={url('/work')}
+        variant={academicCv ? 'quiet' : 'secondary'}
+        icon="lucide:arrow-right"
+        printUrl={false}
+        data-print="hide"
+      >
+        Work experience
+      </LinkButton>
+    </Fragment>
   </PageHeader>
 
-  <Section id="roadmap" eyebrow="Path" title="Academic roadmap">
-    <Timeline label="Academic roadmap, in chronological order">
-      {roadmap.map(({ data }) => (
-        <TimelineItem
-          title={data.degree}
-          subtitle={data.institution}
-          meta={[data.location]}
-          start={data.start}
-          end={data.end}
-          summary={data.summary}
-          highlights={data.highlights}
-          tech={data.tech}
-        />
-      ))}
-    </Timeline>
-  </Section>
+  <!-- 2. Roadmap (screen overview; the printed CV lists the same facts below) -->
+  <div data-print="hide">
+    <Section
+      id="roadmap"
+      eyebrow="Path"
+      title="Academic roadmap"
+      description="Degrees, theses and qualifications in chronological order."
+    >
+      <Timeline label="Academic roadmap, oldest first">
+        {roadmap.map((item) => (
+          <TimelineItem
+            title={item.title}
+            subtitle={item.subtitle}
+            meta={item.meta}
+            start={item.start}
+            end={item.end}
+            summary={item.summary}
+            highlights={item.highlights}
+            tech={item.tech}
+            links={item.anchor ? [{ label: item.anchorLabel, href: `#${item.anchor}` }] : []}
+            detailsLabel="Details"
+          />
+        ))}
+      </Timeline>
+    </Section>
+  </div>
 
+  <!-- 3. Degrees ---------------------------------------------------------- -->
   <Section id="degrees" eyebrow="Education" title="Degrees">
-    <Section id="bachelor-degree" as="article" level={3} title="Bachelor's degree" />
-    <Section id="master-degree" as="article" level={3} title="Master's degree" />
+    {degrees.length === 0 && (
+      <p class="academic-todo">
+        TODO(ioannis): add your degrees to src/content/education/ (Bachelor's and Master's).
+      </p>
+    )}
+    {degrees.map((entry) => {
+      const anchor = degreeAnchors.get(entry) ?? `${entry.data.level}-degree`;
+      const thesis = thesisFor(entry);
+      return (
+        <Section
+          id={anchor}
+          as="article"
+          level={3}
+          eyebrow={DEGREE_LABEL[entry.data.level]}
+          title={entry.data.degree}
+          divider
+        >
+          <DegreeDetails
+            entry={entry}
+            thesis={
+              thesis
+                ? { title: thesis.data.title, anchor: thesisAnchors.get(thesis) ?? '' }
+                : undefined
+            }
+          />
+        </Section>
+      );
+    })}
   </Section>
 
-  <Section id="qualifications" eyebrow="Further study" title="Other qualifications" />
+  <!-- 4. Other qualifications --------------------------------------------- -->
+  <Section
+    id="qualifications"
+    eyebrow="Further study"
+    title="Other qualifications"
+    description="Schools, courses, languages and scholarships."
+  >
+    <EntryList items={qualifications} label="Other qualifications">
+      <p slot="empty" class="academic-todo">
+        TODO(ioannis): other qualifications (schools, courses, languages, scholarships), or confirm
+        there are none so this section can be removed.
+      </p>
+    </EntryList>
+  </Section>
 
+  <!-- 5. Theses ----------------------------------------------------------- -->
   <Section id="theses" eyebrow="Research" title="Theses">
-    <Section id="bachelor-thesis" as="article" level={3} title="Bachelor's thesis" />
-    <Section id="master-thesis" as="article" level={3} title="Master's thesis" />
+    {sortedTheses.length === 0 && (
+      <p class="academic-todo">TODO(ioannis): add your theses to src/content/theses/.</p>
+    )}
+    {sortedTheses.map((entry) => {
+      const anchor = thesisAnchors.get(entry) ?? entry.data.anchor;
+      const degree = degreeFor(entry);
+      return (
+        <Section
+          id={anchor}
+          as="article"
+          level={3}
+          eyebrow={THESIS_LABEL[entry.data.level]}
+          title={entry.data.title}
+          divider
+        >
+          <ThesisDetails
+            entry={entry}
+            anchor={anchor}
+            degree={
+              degree
+                ? { title: degree.data.degree, anchor: degreeAnchors.get(degree) ?? '' }
+                : undefined
+            }
+          />
+        </Section>
+      );
+    })}
   </Section>
 
-  <Section id="projects" eyebrow="Computation" title="Projects & simulations" />
+  <!-- 6. Academic work & simulations -------------------------------------- -->
+  <Section
+    id="projects"
+    eyebrow="Computation"
+    title="Projects & simulations"
+    description="Exercises, assignments, projects and simulations: the physical problem, the numerical method and the tools used."
+  >
+    {projects.length > 0 ? (
+      <AcademicWorkGrid entries={projects} label="Academic projects and simulations" />
+    ) : (
+      <p class="academic-todo">
+        TODO(ioannis): add exercises, assignments, projects or simulations to
+        src/content/academic-work/.
+      </p>
+    )}
+  </Section>
 
-  <Section id="other" eyebrow="Beyond coursework" title="Other academic work" />
+  <!-- 7. Other academic work ---------------------------------------------- -->
+  <Section
+    id="other"
+    eyebrow="Beyond coursework"
+    title="Other academic work"
+    description="Talks, posters, seminars and other academic activities."
+  >
+    <EntryList items={otherWork} label="Other academic work">
+      <p slot="empty" class="academic-todo">
+        TODO(ioannis): talks, posters, seminars or tutoring, or confirm there are none so this
+        section can be removed.
+      </p>
+    </EntryList>
+  </Section>
 </BaseLayout>
+
+<style>
+  /* Draft-only notes for data that does not exist yet (never CV data). */
+  .academic-todo {
+    max-width: var(--container-measure);
+    padding: var(--space-sm) var(--space-md);
+    border: var(--rule-width) dashed var(--color-border-strong);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    color: var(--color-muted);
+  }
+
+  @media print {
+    .academic-todo {
+      display: none;
+    }
+  }
+</style>

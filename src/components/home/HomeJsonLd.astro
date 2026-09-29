@@ -1,0 +1,92 @@
+---
+/**
+ * JSON-LD for Home: `ProfilePage` whose `mainEntity` is the `Person`.
+ * Everything is derived from the content collections; `TODO(ioannis)` values are omitted.
+ * Render it in BaseLayout's "head" slot.
+ *
+ * NOTE: CLAUDE.md plans a shared `src/lib/jsonld.ts`; it does not exist yet. The builders
+ * below are self-contained so they can be moved there unchanged (see the Home report).
+ */
+import { getImage } from 'astro:assets';
+import { getCollection } from 'astro:content';
+import { sortByDateDesc } from '@/lib/dates';
+import type { Profile } from '@/lib/profile';
+import { absoluteUrl } from '@/lib/url';
+import { known } from './data';
+
+interface Props {
+  profile: Profile;
+  /** Site path of the page, e.g. '/'. */
+  path: string;
+}
+
+const { profile, path } = Astro.props;
+
+const pageUrl = absoluteUrl(path);
+const homeUrl = absoluteUrl('/');
+const personId = `${homeUrl}#person`;
+
+const [education, experience] = await Promise.all([
+  getCollection('education'),
+  getCollection('experience'),
+]);
+
+const alumniOf = [...new Set(education.map(({ data }) => data.institution).filter(known))].map(
+  (name) => ({ '@type': 'EducationalOrganization', name }),
+);
+
+const currentRole = sortByDateDesc(experience, (entry) => entry.data).find(
+  ({ data }) => data.end === 'present' && known(data.role) && known(data.organisation),
+)?.data;
+
+let image: string | undefined;
+if (profile.photo) {
+  const optimised = await getImage({ src: profile.photo.src, width: 480, format: 'webp' });
+  image = Astro.site ? new URL(optimised.src, Astro.site).href : undefined;
+}
+
+const email = known(profile.contact.email) ? profile.contact.email : undefined;
+const sameAs = profile.socials
+  .map((social) => social.url)
+  .filter(known)
+  .map((link) => absoluteUrl(link));
+
+const person = {
+  '@type': 'Person',
+  '@id': personId,
+  name: profile.name,
+  url: homeUrl,
+  description: known(profile.headline) ? profile.headline : undefined,
+  image,
+  email: email ? `mailto:${email}` : undefined,
+  address: known(profile.location)
+    ? { '@type': 'PostalAddress', addressLocality: profile.location }
+    : undefined,
+  jobTitle: currentRole?.role,
+  worksFor: currentRole ? { '@type': 'Organization', name: currentRole.organisation } : undefined,
+  alumniOf: alumniOf.length ? alumniOf : undefined,
+  sameAs: sameAs.length ? sameAs : undefined,
+};
+
+const graph = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'ProfilePage',
+      '@id': `${pageUrl}#profilepage`,
+      url: pageUrl,
+      name: profile.seo.home.title,
+      description: profile.seo.home.description,
+      inLanguage: 'en',
+      dateModified: new Date().toISOString().slice(0, 10),
+      mainEntity: { '@id': personId },
+    },
+    person,
+  ],
+};
+
+/** JSON.stringify drops `undefined`; escape `<` so the payload cannot close the script tag. */
+const json = JSON.stringify(graph).replace(/</g, '\\u003c');
+---
+
+<script type="application/ld+json" is:inline set:html={json} />

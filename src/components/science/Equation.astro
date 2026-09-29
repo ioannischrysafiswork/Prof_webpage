@@ -1,0 +1,134 @@
+---
+/**
+ * Equation: KaTeX rendered at build time (no client JS), HTML + MathML output so screen
+ * readers read real maths. Colour follows the text colour, so it works in both themes.
+ *
+ *   <Equation tex={String.raw`i\hbar\,\partial_t\psi = \hat H\psi`} label="1" id="eq-schroedinger" />
+ *   … the energy <Equation inline tex={String.raw`E = \tfrac12 m v^2`} /> is conserved …
+ *
+ * Pass TeX as tex={String.raw`…`} in .astro files: quoted attributes there turn "\frac"
+ * into a form feed + "rac" (likewise \n, \t, \b, \v, \r). Display equations scroll
+ * horizontally inside their own box on narrow screens (the page never scrolls sideways);
+ * the box is keyboard-focusable for that. Invalid TeX fails the build.
+ */
+import katex from 'katex';
+import 'katex/dist/katex-swap.min.css';
+
+interface Props {
+  /** TeX source (KaTeX-supported subset). */
+  tex: string;
+  /** Inline maths in running text instead of a display block. */
+  inline?: boolean;
+  /** Equation number / tag shown at the right, e.g. "1" → "(1)". Display only. */
+  label?: string;
+  /** Stable anchor, e.g. "eq-heat" (link as #eq-heat). */
+  id?: string;
+  /** Accessible name of the display block. Default: "Equation (label)" or "Equation". */
+  ariaLabel?: string;
+  /** Extra KaTeX macros, e.g. { '\\R': '\\mathbb{R}' }. */
+  macros?: Record<string, string>;
+  class?: string;
+}
+
+const { tex, inline = false, label, id, macros, class: className } = Astro.props;
+
+const where = `<Equation> on ${Astro.url.pathname}`;
+const hint = 'Pass TeX as tex={String.raw`…`}: backslash escapes were interpreted.';
+// A quoted attribute turns "\tau" into tab + "au" and still renders: fail loudly instead.
+if (/[\b\f\v]|[\t\r][a-z]/i.test(tex)) {
+  throw new Error(`${where}: ${JSON.stringify(tex)}. ${hint}`);
+}
+
+let html: string;
+try {
+  html = katex.renderToString(tex, {
+    displayMode: !inline,
+    output: 'htmlAndMathml',
+    throwOnError: true,
+    strict: 'warn',
+    trust: false,
+    macros: macros ? { ...macros } : undefined,
+  });
+} catch (error) {
+  const reason = error instanceof Error ? error.message : String(error);
+  const escaped = /\n[a-z]/i.test(tex) ? ` (If "\\n…" was meant: ${hint})` : '';
+  throw new Error(`${where}: invalid TeX. ${reason}${escaped}`, { cause: error });
+}
+
+const ariaLabel = Astro.props.ariaLabel ?? (label ? `Equation (${label})` : 'Equation');
+---
+
+{inline ? (
+  <span class:list={['equation-inline', className]} id={id} set:html={html} />
+) : (
+  <div class:list={['equation', className]} id={id}>
+    {/* Focusable so keyboard users can scroll a long equation (WCAG 2.1.1). */}
+    {/* eslint-disable-next-line astro/jsx-a11y/no-noninteractive-tabindex */}
+    <div class="equation__body" role="group" aria-label={ariaLabel} tabindex={0} set:html={html} />
+    {label && (
+      <span class="equation__label" aria-hidden="true">
+        ({label})
+      </span>
+    )}
+  </div>
+)}
+
+<style>
+  .equation {
+    --equation-bg: var(--color-background); /* set to var(--color-surface) inside cards */
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--space-sm);
+    margin-block: var(--space-lg);
+    color: var(--color-foreground);
+  }
+
+  .equation__body {
+    min-width: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-block: var(--space-2xs);
+    scrollbar-width: thin;
+    border-radius: var(--radius-xs);
+    /* Soft edge shadows hint that the equation continues when it scrolls. */
+    background:
+      linear-gradient(to right, var(--equation-bg) 30%, transparent) left / 1.5rem 100% no-repeat
+        local,
+      linear-gradient(to left, var(--equation-bg) 30%, transparent) right / 1.5rem 100% no-repeat
+        local,
+      radial-gradient(farthest-side at 0 50%, var(--color-shadow), transparent) left / 0.5rem 100%
+        no-repeat scroll,
+      radial-gradient(farthest-side at 100% 50%, var(--color-shadow), transparent) right / 0.5rem
+        100% no-repeat scroll;
+  }
+
+  /* KaTeX's own display wrapper: margins come from .equation. */
+  .equation__body :global(.katex-display) {
+    margin: 0;
+    overflow: visible;
+    padding: 0;
+  }
+
+  .equation__body :global(.katex) {
+    font-size: 1.15em;
+  }
+
+  .equation__label {
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    color: var(--color-muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .equation-inline :global(.katex) {
+    font-size: 1.05em;
+  }
+
+  @media print {
+    .equation__body {
+      overflow: visible;
+      background: none;
+    }
+  }
+</style>

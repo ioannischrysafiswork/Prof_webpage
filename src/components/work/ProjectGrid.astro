@@ -1,0 +1,77 @@
+---
+/**
+ * Grid of curated projects for /work (#projects). Order: `order` ascending (curation),
+ * then most recent first. 1 → 2 → 3 columns; two compact columns without thumbnails in print.
+ */
+import type { CollectionEntry } from 'astro:content';
+import { sortByDateDesc } from '@/lib/dates';
+import ProjectCard from './ProjectCard.astro';
+
+interface Props {
+  entries: readonly CollectionEntry<'projects'>[];
+}
+
+const { entries } = Astro.props;
+const projects = sortByDateDesc(entries, ({ data }) => data).sort(
+  (a, b) => a.data.order - b.data.order,
+);
+---
+
+<ul class="projects" aria-label="Selected projects">
+  {projects.map((entry) => (
+    <ProjectCard entry={entry} />
+  ))}
+</ul>
+
+<style>
+  .projects {
+    display: grid;
+    gap: var(--space-lg);
+  }
+
+  @media (width >= 48rem) {
+    .projects {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (width >= 64rem) {
+    .projects {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  @media print {
+    .projects {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: var(--print-gap);
+    }
+
+    .projects :global(.card__media) {
+      display: none;
+    }
+
+    .projects :global(.card__content) {
+      gap: var(--space-2xs);
+    }
+
+    .projects :global(.card__footer) {
+      padding-top: 0;
+    }
+
+    /* Links print as plain "Repository <https://…>" text, not boxed buttons. */
+    .projects :global(.btn) {
+      display: inline;
+      min-height: auto;
+      padding: 0;
+      border: 0;
+      background: none;
+      font-size: var(--text-xs);
+      white-space: normal;
+    }
+
+    .projects :global(.btn__icon) {
+      display: none;
+    }
+  }
+</style>

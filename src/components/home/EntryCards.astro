@@ -1,0 +1,127 @@
+---
+/**
+ * Explore (`#explore`): two large, equal-weight entry cards to Work Experience and
+ * Academic. Each shows the area's one-line description (NAV in lib/site.ts), a small
+ * preview (current or latest role / degree, from the collections) and an arrow CTA,
+ * in the area's tint. The whole card is one link (Card's stretched title link).
+ */
+import { Icon } from 'astro-icon/components';
+import Section from '@/components/ui/Section.astro';
+import Card from '@/components/ui/Card.astro';
+import { NAV, type PageKey } from '@/lib/site';
+import { url } from '@/lib/url';
+import type { EntryPreview } from './data';
+
+interface Props {
+  previews: Partial<Record<PageKey, EntryPreview>>;
+}
+
+const { previews } = Astro.props;
+
+const areas = NAV.map((item, index) => ({ ...item, number: String(index + 1).padStart(2, '0') }))
+  .filter((item) => item.key !== 'home')
+  .map((item) => ({ ...item, preview: previews[item.key] }));
+---
+
+<Section id="explore" eyebrow="Explore" title="Work and academia">
+  <ul class="entry-grid">
+    {areas.map((item) => (
+      <Card
+        as="li"
+        variant="feature"
+        tint={item.key}
+        eyebrow={`Section ${item.number}`}
+        title={item.label}
+        headingLevel={3}
+        href={url(item.path)}
+        class="entry-card"
+      >
+        <p class="entry__description">{item.description}</p>
+        {item.preview && (
+          <p class="entry__preview">
+            <span class="entry__preview-label">{item.preview.label}</span>
+            <span class="entry__preview-text">{item.preview.text}</span>
+          </p>
+        )}
+        <p class="entry__cta" aria-hidden="true">
+          <span>Open {item.label}</span>
+          <Icon name="lucide:arrow-right" />
+        </p>
+      </Card>
+    ))}
+  </ul>
+</Section>
+
+<style>
+  .entry-grid {
+    display: grid;
+    gap: var(--space-lg);
+  }
+
+  @media (width >= 48rem) {
+    .entry-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  /* Pin the CTA to the bottom so both cards align whatever their preview length. */
+  .entry-grid :global(.entry-card .card__body) {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: var(--space-md);
+  }
+
+  .entry__description {
+    font-size: var(--text-lg);
+    line-height: var(--text-lg--line-height);
+    color: var(--color-foreground);
+  }
+
+  .entry__preview {
+    display: grid;
+    gap: var(--space-2xs);
+    padding-left: var(--space-sm);
+    border-left: var(--rule-width-strong) solid var(--tint);
+  }
+
+  .entry__preview-label {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    line-height: var(--text-xs--line-height);
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
+    color: var(--color-muted);
+  }
+
+  .entry__preview-text {
+    color: var(--color-foreground);
+  }
+
+  .entry__cta {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    margin-top: auto;
+    padding-top: var(--space-sm);
+    font-weight: 500;
+    color: var(--tint);
+  }
+
+  .entry__cta :global(svg) {
+    width: var(--size-icon);
+    height: var(--size-icon);
+    flex: none;
+    transition: translate var(--duration-base) var(--ease-emphasized);
+  }
+
+  .entry-grid :global(.entry-card:hover) .entry__cta :global(svg) {
+    translate: var(--space-2xs) 0;
+  }
+
+  @media print {
+    .entry__cta {
+      display: none;
+    }
+  }
+</style>

@@ -1,0 +1,76 @@
+---
+/**
+ * Highlights (`#highlights`): a compact grid of featured degrees, roles, certifications
+ * and achievements. Items come from the shared collections via `getHighlights()` and
+ * link to their stable anchors on /work or /academic. With nothing featured yet, a short
+ * pointer to the two full pages keeps the section (and its anchor) meaningful.
+ */
+import Section from '@/components/ui/Section.astro';
+import Card from '@/components/ui/Card.astro';
+import { url } from '@/lib/url';
+import type { Highlight } from './data';
+
+interface Props {
+  items: Highlight[];
+}
+
+const { items } = Astro.props;
+---
+
+<Section
+  id="highlights"
+  eyebrow="At a glance"
+  title="Highlights"
+  description="Degrees, certifications and selected achievements. Each one links to the full entry."
+>
+  {items.length > 0 ? (
+    <ul class="highlights">
+      {items.map((item) => (
+        <Card
+          as="li"
+          eyebrow={item.kind}
+          title={item.title}
+          meta={item.meta}
+          href={url(item.path)}
+          tint={item.tint}
+        />
+      ))}
+    </ul>
+  ) : (
+    <p class="highlights__empty">
+      Full details are on the{' '}
+      <a class="link" href={url('/work')}>
+        Work Experience
+      </a>{' '}
+      and{' '}
+      <a class="link" href={url('/academic')}>
+        Academic
+      </a>{' '}
+      pages.
+    </p>
+  )}
+</Section>
+
+<style>
+  .highlights {
+    display: grid;
+    gap: var(--space-md);
+  }
+
+  @media (width >= 40rem) {
+    .highlights {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (width >= 64rem) {
+    .highlights {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  .highlights__empty {
+    max-width: var(--container-measure);
+    color: var(--color-muted);
+  }
+</style>

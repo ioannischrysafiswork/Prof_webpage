@@ -1,48 +1,193 @@
 ---
 /**
- * Work Experience — `/work` (CLAUDE.md §2.2). Permanent route, printed in CVs.
- * Skeleton wired to the design system: work-page-builder fills in each section.
- * Stable anchors: #about, #experience, #certifications, #projects, #skills.
+ * Work Experience — `/work` (CLAUDE.md §2.2). Permanent route, printed in CVs, so the page
+ * stands on its own: who Ioannis is, how to reach him, and his full professional record.
+ *
+ * Stable anchors (never rename): #about, #experience, #certifications, #projects, #skills.
+ * Sub-anchors: #certification-<id>, #skills-<group id>.
+ * All data comes from content collections; components live in src/components/work/.
+ * Client JS: none added (the in-page nav highlights the current section with CSS only).
  */
 import { getCollection } from 'astro:content';
+import { Icon } from 'astro-icon/components';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import PageHeader from '@/components/ui/PageHeader.astro';
 import Section from '@/components/ui/Section.astro';
+import LinkButton from '@/components/ui/LinkButton.astro';
 import Timeline from '@/components/timeline/Timeline.astro';
-import TimelineItem from '@/components/timeline/TimelineItem.astro';
+import ContactLinks from '@/components/work/ContactLinks.astro';
+import SubNav from '@/components/work/SubNav.astro';
+import ExperienceItem from '@/components/work/ExperienceItem.astro';
+import CertificationList from '@/components/work/CertificationList.astro';
+import ProjectGrid from '@/components/work/ProjectGrid.astro';
+import SkillGroups from '@/components/work/SkillGroups.astro';
+import EmptyNote from '@/components/work/EmptyNote.astro';
+import { hasValue, publishedDocument } from '@/components/work/links';
+import { serializeJsonLd, workJsonLd } from '@/components/work/jsonld';
 import { getProfile } from '@/lib/profile';
 import { sortByDateDesc } from '@/lib/dates';
+import { NAV } from '@/lib/site';
+import { url } from '@/lib/url';
+
+const PATH = '/work';
+
+/** Section headings (UI copy) — shared by the sections and the in-page nav. */
+const SECTIONS = {
+  about: { id: 'about', label: 'About' },
+  experience: { id: 'experience', label: 'Experience', eyebrow: 'Career' },
+  certifications: { id: 'certifications', label: 'Certifications', eyebrow: 'Credentials' },
+  projects: { id: 'projects', label: 'Selected projects', eyebrow: 'GitHub' },
+  skills: { id: 'skills', label: 'Skills', eyebrow: 'Toolbox' },
+} as const;
 
 const profile = await getProfile();
-const experience = sortByDateDesc(await getCollection('experience'), (entry) => entry.data);
+const [experienceEntries, certifications, projects, skills] = await Promise.all([
+  getCollection('experience'),
+  getCollection('certifications'),
+  getCollection('projects'),
+  getCollection('skills'),
+]);
+const experience = sortByDateDesc(experienceEntries, (entry) => entry.data);
+
+const cv = publishedDocument(profile.cv.work);
+const academic = NAV.find((item) => item.key === 'academic');
+const github = profile.socials.find(
+  (social) => hasValue(social.url) && /^https:\/\/(www\.)?github\.com\//i.test(social.url),
+);
+
+const jsonLd = workJsonLd({
+  profile,
+  path: PATH,
+  title: profile.seo.work.title,
+  description: profile.seo.work.description,
+  experience,
+  certifications,
+  skills,
+});
 ---
 
-<BaseLayout page="work" path="/work">
-  <PageHeader id="about" eyebrow={profile.name} title="Work Experience" lede={profile.headline}>
+<BaseLayout page="work" path={PATH}>
+  <script is:inline type="application/ld+json" slot="head" set:html={serializeJsonLd(jsonLd)} />
+  <PageHeader
+    id={SECTIONS.about.id}
+    eyebrow={profile.name}
+    title="Work Experience"
+    lede={profile.headline}
+    class="work-intro"
+  >
     <p>{profile.intro.work}</p>
+    <ContactLinks profile={profile} />
+    <Fragment slot="actions">
+      {cv && (
+        <LinkButton href={cv} variant="primary" icon="lucide:download" download data-print="hide">
+          Download CV (PDF)
+        </LinkButton>
+      )}
+      {academic && (
+        <p class="work-crosslink" data-print="hide">
+          <a href={url(academic.path)} class="link work-crosslink__link">
+            {academic.label} profile
+            <Icon name="lucide:arrow-right" class="work-crosslink__icon" aria-hidden="true" />
+          </a>
+          <span class="work-crosslink__desc">{academic.description}</span>
+        </p>
+      )}
+    </Fragment>
   </PageHeader>
 
-  <Section id="experience" eyebrow="Career" title="Experience">
-    <Timeline label="Work experience, most recent first">
-      {experience.map(({ data }) => (
-        <TimelineItem
-          title={data.role}
-          subtitle={data.organisation}
-          meta={[data.location, data.employmentType]}
-          start={data.start}
-          end={data.end}
-          showDuration
-          summary={data.summary}
-          highlights={data.highlights}
-          tech={data.tech}
-        />
-      ))}
-    </Timeline>
+  <SubNav items={Object.values(SECTIONS)} />
+
+  <Section
+    id={SECTIONS.experience.id}
+    eyebrow={SECTIONS.experience.eyebrow}
+    title={SECTIONS.experience.label}
+  >
+    {experience.length > 0 ? (
+      <Timeline label="Work experience, most recent first">
+        {experience.map((entry) => (
+          <ExperienceItem entry={entry} />
+        ))}
+      </Timeline>
+    ) : (
+      <EmptyNote>No roles are listed yet.</EmptyNote>
+    )}
   </Section>
 
-  <Section id="certifications" eyebrow="Credentials" title="Certifications" />
+  <Section
+    id={SECTIONS.certifications.id}
+    eyebrow={SECTIONS.certifications.eyebrow}
+    title={SECTIONS.certifications.label}
+  >
+    {certifications.length > 0 ? (
+      <CertificationList entries={certifications} />
+    ) : (
+      <EmptyNote>No certifications are listed yet.</EmptyNote>
+    )}
+  </Section>
 
-  <Section id="projects" eyebrow="GitHub" title="Selected projects" />
+  <Section
+    id={SECTIONS.projects.id}
+    eyebrow={SECTIONS.projects.eyebrow}
+    title={SECTIONS.projects.label}
+  >
+    {github && (
+      <LinkButton slot="actions" href={url(github.url)} size="sm" data-print="hide">
+        All repositories on {github.label}
+      </LinkButton>
+    )}
+    {projects.length > 0 ? (
+      <ProjectGrid entries={projects} />
+    ) : (
+      <EmptyNote>No projects are listed yet.</EmptyNote>
+    )}
+  </Section>
 
-  <Section id="skills" eyebrow="Toolbox" title="Skills" />
+  <Section id={SECTIONS.skills.id} eyebrow={SECTIONS.skills.eyebrow} title={SECTIONS.skills.label}>
+    {skills.some(({ data }) => data.items.length > 0) ? (
+      <SkillGroups groups={skills} />
+    ) : (
+      <EmptyNote>No skills are listed yet.</EmptyNote>
+    )}
+  </Section>
 </BaseLayout>
+
+<style>
+  .work-crosslink {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0 var(--space-sm);
+    font-size: var(--text-sm);
+  }
+
+  .work-crosslink__link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2xs);
+    min-height: var(--size-target);
+    font-weight: 500;
+  }
+
+  .work-crosslink__icon {
+    width: var(--size-icon-sm);
+    height: var(--size-icon-sm);
+  }
+
+  .work-crosslink__desc {
+    color: var(--color-muted);
+  }
+
+  /* Print: the masthead already shows name, headline and contact; drop the duplicates
+     and keep the intro as a compact "profile" paragraph. */
+  @media print {
+    :global(.work-intro .eyebrow),
+    :global(.work-intro .page-header__lede) {
+      display: none;
+    }
+
+    :global(.work-intro .page-header__title) {
+      font-size: var(--text-2xl);
+      line-height: var(--text-2xl--line-height);
+    }
+  }
+</style>

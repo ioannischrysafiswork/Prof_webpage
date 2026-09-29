@@ -1,0 +1,35 @@
+---
+/**
+ * A CV-style definition list: mono labels in a left column (aligned with the timeline's
+ * date column from 48rem), values on the right. Children are <Fact> rows.
+ *
+ *   <FactList label="Degree facts">
+ *     <Fact label="Institution">…</Fact>
+ *   </FactList>
+ */
+interface Props {
+  /** Optional accessible name for the list. */
+  label?: string;
+  class?: string;
+}
+
+const { label, class: className } = Astro.props;
+---
+
+<dl class:list={['facts', className]} aria-label={label}>
+  <slot />
+</dl>
+
+<style>
+  .facts {
+    display: grid;
+    gap: var(--space-sm);
+    max-width: calc(var(--tl-date-col) + var(--tl-rail) + var(--container-measure));
+  }
+
+  @media print {
+    .facts {
+      gap: var(--space-2xs);
+    }
+  }
+</style>
