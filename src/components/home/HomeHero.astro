@@ -9,6 +9,7 @@
  * above the fold and contains the LCP element.
  */
 import { Picture } from 'astro:assets';
+import HeroField from '@/components/science/HeroField.astro';
 import PageHeader from '@/components/ui/PageHeader.astro';
 import LinkButton from '@/components/ui/LinkButton.astro';
 import type { Profile } from '@/lib/profile';
@@ -49,7 +50,7 @@ const areas = NAV.filter((item) => item.key !== 'home');
   </Fragment>
 
   <div slot="aside" class="home-hero__visual">
-    <!-- HeroField from science-visuals goes here (decorative, aria-hidden, reduced-motion aware) -->
+    <HeroField layout="box" class="home-hero__field" />
     {profile.photo && (
       <Picture
         src={profile.photo.src}
@@ -72,9 +73,27 @@ const areas = NAV.filter((item) => item.key !== 'home');
     place-items: center;
   }
 
-  /* Nothing to show yet (no portrait, no HeroField): take no space on small screens. */
-  .home-hero__visual:empty {
+  /* The decorative field fills the aside on wide screens only; on phones the text leads. */
+  .home-hero__visual :global(.home-hero__field) {
+    width: 100%;
+  }
+
+  @media (width < 64rem) {
+    .home-hero__visual :global(.home-hero__field) {
+      display: none;
+    }
+  }
+
+  /* With a portrait, the photo takes the aside and the field steps aside. */
+  .home-hero__visual:has(:global(.home-hero__portrait)) :global(.home-hero__field) {
     display: none;
+  }
+
+  /* Nothing visible on small screens without a portrait: take no space. */
+  @media (width < 64rem) {
+    .home-hero__visual:not(:has(:global(.home-hero__portrait))) {
+      display: none;
+    }
   }
 
   .home-hero__visual :global(.home-hero__portrait) {

@@ -162,3 +162,35 @@ links opt in with `data-print-url`, which LinkButton, Card and TimelineItem set 
 `<details>`, and keeps timeline items and cards on one page. Decorative lines use borders
 (not backgrounds) so they survive `printBackground: false`.
 Check it with the `export-cv-pdf` skill.
+
+## Science components (`src/components/science/`)
+
+Only real data/results from Ioannis, or say "Illustrative" in the caption. All colours come
+from tokens and follow the theme.
+
+- **`HeroField.astro`**: decorative Home-hero wave/particle field (aria-hidden, ≈1.6 KB gzip
+  JS, ≤ 30 fps, paused off-screen / hidden tab / reduced motion, static CSS lattice without
+  JS, hidden in print). Props: `layout = 'fill' | 'box'` (fill = absolute layer, parent needs
+  `position: relative; isolation: isolate`; box = block with `aspect`), `aspect = '4 / 3'`,
+  `mask = 'edge' | 'radial' | 'none'`, `tint?: Tint` (default accent), `class`.
+- **`Equation.astro`**: KaTeX at build time (HTML + MathML), no JS. Props: `tex` (always
+  ``tex={String.raw`…`}`` — quoted attributes eat backslashes), `inline = false`, `label?`
+  ("1" → "(1)"), `id?` (e.g. `eq-heat`), `ariaLabel?`, `macros?`, `class`. Display equations
+  scroll inside their own box and are focusable. Invalid TeX fails the build.
+- **`MathStyles.astro`**: no props; add once to a page that shows maths only via MDX
+  `$…$` / `$$…$$` (Equation already includes the CSS).
+- **`Figure.astro`**: numbered `<figure>`. Media: `src?: ImageMetadata`, `svg?: string`
+  (`?raw` import, inlined, theme-aware) or default slot. Props: `alt` (required), `caption?`
+  (or slot `caption`), `number?`, `prefix = 'Figure'`, `credit?`, `creditHref?`, `id?`,
+  `enlarge = true` (native `<dialog>`, ≈0.4 KB gzip JS), `framed = true`, `loading = 'lazy'`,
+  `sizes?`, `mediaClass?`, `class`.
+- **`PlotEmbed.astro`**: theme-aware Matplotlib SVG (scientific-figures skill); maps
+  Matplotlib fonts to site fonts. Props: `svg`, `alt` (required), `caption?`, `number?`,
+  `prefix?`, `credit?`, `creditHref?`, `id?`, `enlarge = true`, `framed = true`, `minWidth?`,
+  `bare = false`, `class`.
+- **`SimulationCanvas.astro`**: lazy canvas for real simulations; module in
+  `src/components/science/sims/<sim>.ts` default-exports a `CreateSimulation` (see
+  `simulation.ts`: `reset()`, `step(dt)`, `draw(ctx, {width, height, colors})`, optional
+  `resize`, `destroy`). Props: `sim`, `alt` (required), `params?`, `aspect = '16 / 9'`,
+  `poster?: ImageMetadata`, `label`, `autoplay = true`, `staticTime = 0`, `class`. Wrap in
+  `<Figure>` for a caption. Runtime ≈2.1 KB gzip + the sim chunk, loaded near the viewport.
