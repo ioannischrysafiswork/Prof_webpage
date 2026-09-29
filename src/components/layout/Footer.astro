@@ -1,0 +1,50 @@
+---
+/**
+ * Shared footer: contact links (from profile.yaml) and cross-links to all three areas,
+ * so every page is complete on its own (CLAUDE.md §2).
+ * Scaffold only: design-system adds styling.
+ */
+import { Icon } from 'astro-icon/components';
+import type { Profile } from '@/lib/profile';
+import { NAV } from '@/lib/site';
+import { url } from '@/lib/url';
+
+interface Props {
+  profile: Profile;
+}
+
+const { profile } = Astro.props;
+const year = new Date().getFullYear();
+---
+
+<footer>
+  <nav aria-label="Footer">
+    <ul>
+      {NAV.map((item) => (
+        <li>
+          <a href={url(item.path)}>{item.label}</a>
+        </li>
+      ))}
+    </ul>
+  </nav>
+
+  <ul aria-label="Contact">
+    {profile.contact.email && (
+      <li>
+        <a href={`mailto:${profile.contact.email}`}>{profile.contact.email}</a>
+      </li>
+    )}
+    {profile.socials.map((social) => (
+      <li>
+        <a href={url(social.url)} rel="me noopener">
+          {social.icon && <Icon name={social.icon} aria-hidden="true" />}
+          {social.label}
+        </a>
+      </li>
+    ))}
+  </ul>
+
+  <p>
+    &copy; {year} {profile.name}
+  </p>
+</footer>

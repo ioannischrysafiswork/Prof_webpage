@@ -1,0 +1,43 @@
+---
+/**
+ * Home — `/` (CLAUDE.md §2.1). Permanent route.
+ * Placeholder skeleton: home-page-builder fills in each section.
+ * Stable anchors: #about, #highlights, #explore, #interests.
+ */
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { getProfile } from '@/lib/profile';
+import { NAV } from '@/lib/site';
+import { url } from '@/lib/url';
+
+const profile = await getProfile();
+const entryPoints = NAV.filter((item) => item.key !== 'home');
+---
+
+<BaseLayout page="home" path="/">
+  <section id="about" aria-labelledby="about-title">
+    <h1 id="about-title">{profile.name}</h1>
+    <p>{profile.headline}</p>
+    <p>{profile.intro.home}</p>
+  </section>
+
+  <section id="highlights" aria-labelledby="highlights-title">
+    <h2 id="highlights-title">Highlights</h2>
+    {/* Degrees, key certifications, achievements — featured entries from the collections. */}
+  </section>
+
+  <section id="explore" aria-labelledby="explore-title">
+    <h2 id="explore-title">Explore</h2>
+    <ul>
+      {entryPoints.map((item) => (
+        <li>
+          <a href={url(item.path)}>{item.label}</a>
+        </li>
+      ))}
+    </ul>
+  </section>
+
+  <section id="interests" aria-labelledby="interests-title">
+    <h2 id="interests-title">Outside work</h2>
+    {/* Hobbies and interests from interests.yaml. */}
+  </section>
+</BaseLayout>

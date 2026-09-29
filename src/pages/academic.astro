@@ -1,0 +1,68 @@
+---
+/**
+ * Academic — `/academic` (CLAUDE.md §2.3). Permanent route, printed in academic CVs.
+ * Placeholder skeleton: academic-page-builder fills in each section.
+ * Stable anchors: #about, #roadmap, #degrees (#bachelor-degree, #master-degree),
+ * #qualifications, #theses (#bachelor-thesis, #master-thesis), #projects, #other.
+ */
+import { getCollection } from 'astro:content';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { getProfile } from '@/lib/profile';
+import { formatRange, sortByDateAsc } from '@/lib/dates';
+
+const profile = await getProfile();
+const roadmap = sortByDateAsc(await getCollection('education'), (entry) => entry.data);
+---
+
+<BaseLayout page="academic" path="/academic">
+  <section id="about" aria-labelledby="about-title">
+    <h1 id="about-title">Academic</h1>
+    <p>
+      {profile.name} · {profile.headline}
+    </p>
+    <p>{profile.intro.academic}</p>
+  </section>
+
+  <section id="roadmap" aria-labelledby="roadmap-title">
+    <h2 id="roadmap-title">Academic roadmap</h2>
+    <ol>
+      {roadmap.map(({ data }) => (
+        <li>
+          {data.degree} · {formatRange(data.start, data.end)}
+        </li>
+      ))}
+    </ol>
+  </section>
+
+  <section id="degrees" aria-labelledby="degrees-title">
+    <h2 id="degrees-title">Degrees</h2>
+    <article id="bachelor-degree" aria-labelledby="bachelor-degree-title">
+      <h3 id="bachelor-degree-title">Bachelor's degree</h3>
+    </article>
+    <article id="master-degree" aria-labelledby="master-degree-title">
+      <h3 id="master-degree-title">Master's degree</h3>
+    </article>
+  </section>
+
+  <section id="qualifications" aria-labelledby="qualifications-title">
+    <h2 id="qualifications-title">Other qualifications</h2>
+  </section>
+
+  <section id="theses" aria-labelledby="theses-title">
+    <h2 id="theses-title">Theses</h2>
+    <article id="bachelor-thesis" aria-labelledby="bachelor-thesis-title">
+      <h3 id="bachelor-thesis-title">Bachelor's thesis</h3>
+    </article>
+    <article id="master-thesis" aria-labelledby="master-thesis-title">
+      <h3 id="master-thesis-title">Master's thesis</h3>
+    </article>
+  </section>
+
+  <section id="projects" aria-labelledby="projects-title">
+    <h2 id="projects-title">Projects &amp; simulations</h2>
+  </section>
+
+  <section id="other" aria-labelledby="other-title">
+    <h2 id="other-title">Other academic work</h2>
+  </section>
+</BaseLayout>

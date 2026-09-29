@@ -1,0 +1,60 @@
+/*
+ * Global styles & design tokens — the ONLY place tokens are defined (CLAUDE.md §4).
+ *
+ * Scaffold only: the design-system agent owns this file and will define the full
+ * palette (light/dark), type scale, spacing, radii, shadows, motion and print styles.
+ */
+@import 'tailwindcss';
+
+/* Self-hosted variable fonts (Fontsource) — no third-party requests. */
+@import '@fontsource-variable/newsreader';
+@import '@fontsource-variable/inter';
+@import '@fontsource-variable/jetbrains-mono';
+
+@theme {
+  --font-serif: 'Newsreader Variable', ui-serif, Georgia, serif;
+  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, 'SFMono-Regular', monospace;
+}
+
+@layer base {
+  html {
+    font-family: var(--font-sans);
+    color-scheme: light dark;
+  }
+
+  /* Anchor targets (e.g. /work#skills) should not hide under a sticky header. */
+  [id] {
+    scroll-margin-top: 5rem;
+  }
+}
+
+/* Visually hidden until focused — used by the skip link. */
+@utility sr-only-focusable {
+  &:not(:focus):not(:focus-within) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+}
+
+/* Shiki dual themes (defaultColor: false): colours come from CSS variables. */
+.astro-code,
+.astro-code span {
+  color: var(--shiki-light);
+  background-color: var(--shiki-light-bg);
+}
+
+@media (prefers-color-scheme: dark) {
+  .astro-code,
+  .astro-code span {
+    color: var(--shiki-dark);
+    background-color: var(--shiki-dark-bg);
+  }
+}

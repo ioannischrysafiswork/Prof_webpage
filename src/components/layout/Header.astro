@@ -1,0 +1,31 @@
+---
+/**
+ * Site header with the primary navigation (Home | Work Experience | Academic).
+ * Scaffold only: design-system adds styling, the mobile menu and the theme toggle.
+ */
+import { NAV, type PageKey } from '@/lib/site';
+import { url } from '@/lib/url';
+
+interface Props {
+  /** Current area, for aria-current. Omit on pages outside the three areas (e.g. 404). */
+  current?: PageKey;
+  siteName: string;
+}
+
+const { current, siteName } = Astro.props;
+---
+
+<header>
+  <a href={url('/')}>{siteName}</a>
+  <nav aria-label="Main">
+    <ul>
+      {NAV.map((item) => (
+        <li>
+          <a href={url(item.path)} aria-current={item.key === current ? 'page' : undefined}>
+            {item.label}
+          </a>
+        </li>
+      ))}
+    </ul>
+  </nav>
+</header>

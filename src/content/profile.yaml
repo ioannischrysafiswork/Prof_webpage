@@ -1,0 +1,43 @@
+# Profile — single source for name, headline, intros, SEO text and contact links.
+# Only verified facts or TODO(ioannis) placeholders. Schema: src/content.config.ts (profile).
+
+name: Ioannis Chrysafis
+headline: 'TODO(ioannis): one-line headline, e.g. current role and field'
+location: 'TODO(ioannis): city and country to show publicly (or remove this line)'
+
+# 4–5 line first-person intros. Written with the write-intros skill; approved by Ioannis.
+intro:
+  home: 'TODO(ioannis): personal introduction (personality, interests, approach to learning, what you enjoy outside work and academia)'
+  work: 'TODO(ioannis): professional introduction (work ethic, problem solving, adaptability, working in different teams)'
+  academic: 'TODO(ioannis): academic introduction (physics, computational methods, numerical simulations)'
+introStatus:
+  home: todo
+  work: todo
+  academic: todo
+
+# Per-page <title> and meta description. Neutral wording until the intros are approved.
+seo:
+  home:
+    title: Ioannis Chrysafis
+    description: Personal website of Ioannis Chrysafis — background, interests, and entry points to his work experience and academic profile.
+  work:
+    title: Work Experience · Ioannis Chrysafis
+    description: Work experience, certifications, selected projects and technical skills of Ioannis Chrysafis.
+  academic:
+    title: Academic · Ioannis Chrysafis
+    description: Academic profile of Ioannis Chrysafis — degrees, theses, qualifications, and academic projects and simulations.
+
+# Only contact details explicitly approved by Ioannis are published.
+contact: {}
+# contact:
+#   email: 'TODO(ioannis): approve the public contact email'
+
+socials:
+  - label: GitHub
+    url: https://github.com/ioannischrysafiswork
+    icon: simple-icons:github
+    handle: ioannischrysafiswork
+# TODO(ioannis): LinkedIn / ORCID / Google Scholar URLs, if you want them shown
+
+# Downloadable CVs (public/documents/), produced by the export-cv-pdf skill.
+cv: {}

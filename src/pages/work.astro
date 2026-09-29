@@ -1,0 +1,52 @@
+---
+/**
+ * Work Experience — `/work` (CLAUDE.md §2.2). Permanent route, printed in CVs.
+ * Placeholder skeleton: work-page-builder fills in each section.
+ * Stable anchors: #about, #experience, #certifications, #projects, #skills.
+ */
+import { getCollection } from 'astro:content';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { getProfile } from '@/lib/profile';
+import { formatRange, sortByDateDesc, toDateTimeAttr } from '@/lib/dates';
+
+const profile = await getProfile();
+const experience = sortByDateDesc(await getCollection('experience'), (entry) => entry.data);
+---
+
+<BaseLayout page="work" path="/work">
+  <section id="about" aria-labelledby="about-title">
+    <h1 id="about-title">Work Experience</h1>
+    <p>
+      {profile.name} · {profile.headline}
+    </p>
+    <p>{profile.intro.work}</p>
+  </section>
+
+  <section id="experience" aria-labelledby="experience-title">
+    <h2 id="experience-title">Experience</h2>
+    <ol>
+      {experience.map(({ data }) => (
+        <li>
+          <h3>
+            {data.role} · {data.organisation}
+          </h3>
+          <p>
+            <time datetime={toDateTimeAttr(data.start)}>{formatRange(data.start, data.end)}</time>
+          </p>
+        </li>
+      ))}
+    </ol>
+  </section>
+
+  <section id="certifications" aria-labelledby="certifications-title">
+    <h2 id="certifications-title">Certifications</h2>
+  </section>
+
+  <section id="projects" aria-labelledby="projects-title">
+    <h2 id="projects-title">Selected projects</h2>
+  </section>
+
+  <section id="skills" aria-labelledby="skills-title">
+    <h2 id="skills-title">Skills</h2>
+  </section>
+</BaseLayout>

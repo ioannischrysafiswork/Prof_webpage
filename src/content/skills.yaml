@@ -1,0 +1,39 @@
+# Skills grouped by category, each with context of use. No ratings or percentages.
+# Schema: src/content.config.ts (skills). Groups are structural; items must be verified.
+
+- id: programming-languages
+  group: Programming languages
+  order: 1
+  items:
+    - name: 'TODO(ioannis): languages you use'
+      context: 'TODO(ioannis): what you use each one for'
+
+- id: scientific-computing
+  group: Scientific computing
+  order: 2
+  items:
+    - name: 'TODO(ioannis): numerical libraries, simulation tools'
+
+- id: web-and-software
+  group: Web & software
+  order: 3
+  items:
+    - name: 'TODO(ioannis): frameworks and software engineering tools'
+
+- id: data-and-tools
+  group: Data & tools
+  order: 4
+  items:
+    - name: 'TODO(ioannis): data, analysis and productivity tools'
+
+- id: platforms-and-devops
+  group: Platforms & DevOps
+  order: 5
+  items:
+    - name: 'TODO(ioannis): cloud platforms, operating systems, CI/CD'
+
+- id: professional-skills
+  group: Professional skills
+  order: 6
+  items:
+    - name: 'TODO(ioannis): professional skills and spoken languages'

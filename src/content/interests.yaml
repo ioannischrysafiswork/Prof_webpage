@@ -1,0 +1,7 @@
+# Hobbies and interests for the Home page. Only what Ioannis tells us — never invented.
+# Schema: src/content.config.ts (interests).
+
+- id: todo-interest
+  name: 'TODO(ioannis): a hobby or interest'
+  note: 'TODO(ioannis): a short personal phrase about it, in your own words'
+  order: 1

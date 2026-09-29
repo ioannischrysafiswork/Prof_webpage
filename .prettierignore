@@ -1,0 +1,17 @@
+# Build output & generated files
+dist/
+.astro/
+node_modules/
+package-lock.json
+
+# Private / raw inputs and QA artefacts
+source-material/
+.qa/
+
+# Hand-written project docs & agent config (formatting would reflow tables and prose)
+CLAUDE.md
+.claude/
+.mcp.json
+
+# Static assets
+public/

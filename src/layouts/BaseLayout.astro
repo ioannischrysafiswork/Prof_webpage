@@ -1,0 +1,68 @@
+---
+/**
+ * Base layout for every page: <head> (SEO, favicon, sitemap), skip link, header with
+ * the three-area navigation, <main id="main">, and the shared footer.
+ *
+ * Scaffold only: design-system adds the theme bootstrap script (no flash of wrong
+ * theme), the theme toggle, and visual styling.
+ */
+import { ClientRouter } from 'astro:transitions';
+import '@/styles/global.css';
+import SEO from '@/components/layout/SEO.astro';
+import SkipLink from '@/components/layout/SkipLink.astro';
+import Header from '@/components/layout/Header.astro';
+import Footer from '@/components/layout/Footer.astro';
+import { getProfile } from '@/lib/profile';
+import { OG_IMAGES, type PageKey } from '@/lib/site';
+import { url } from '@/lib/url';
+
+interface Props {
+  /** Which area this page belongs to; supplies default SEO text and nav state. */
+  page?: PageKey;
+  /** Site path of this page, e.g. '/work' (for the canonical URL). */
+  path: string;
+  /** Override the per-page title / description from profile.yaml → seo. */
+  title?: string;
+  description?: string;
+  ogImage?: string;
+  noindex?: boolean;
+}
+
+const profile = await getProfile();
+
+const { page, path, noindex = false } = Astro.props;
+const seo = page ? profile.seo[page] : undefined;
+const title = Astro.props.title ?? seo?.title ?? profile.name;
+const description = Astro.props.description ?? seo?.description ?? profile.seo.home.description;
+const ogImage = Astro.props.ogImage ?? OG_IMAGES[page ?? 'home'];
+---
+
+<!doctype html>
+<html lang="en" data-page={page}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    <link rel="icon" type="image/svg+xml" href={url('/favicon.svg')} />
+    <link rel="sitemap" href={url('/sitemap-index.xml')} />
+    <SEO
+      title={title}
+      siteName={profile.name}
+      description={description}
+      path={path}
+      ogImage={ogImage}
+      noindex={noindex}
+      type={page === 'home' ? 'profile' : 'website'}
+    />
+    <ClientRouter />
+    <slot name="head" />
+  </head>
+  <body>
+    <SkipLink />
+    <Header current={page} siteName={profile.name} />
+    <main id="main" tabindex="-1">
+      <slot />
+    </main>
+    <Footer profile={profile} />
+  </body>
+</html>

@@ -1,0 +1,57 @@
+---
+/**
+ * Per-page <head> metadata: title, description, canonical, Open Graph, Twitter card.
+ * Every shareable page must pass its own title, description and OG image (CLAUDE.md §2).
+ */
+import { absoluteUrl } from '@/lib/url';
+
+interface Props {
+  title: string;
+  /** Person / site name from profile.yaml, for og:site_name. */
+  siteName: string;
+  description: string;
+  /** Site path of the page, e.g. '/work'. Used for the canonical URL. */
+  path: string;
+  /** Site path of the OG image in public/, e.g. '/og/work.png'. */
+  ogImage: string;
+  ogImageAlt?: string;
+  noindex?: boolean;
+  type?: 'website' | 'profile';
+}
+
+const {
+  title,
+  siteName,
+  description,
+  path,
+  ogImage,
+  ogImageAlt = title,
+  noindex = false,
+  type = 'website',
+} = Astro.props;
+
+const canonical = absoluteUrl(path);
+const image = absoluteUrl(ogImage);
+---
+
+<title>{title}</title>
+<meta name="description" content={description} />
+<link rel="canonical" href={canonical} />
+{noindex && <meta name="robots" content="noindex" />}
+
+<meta property="og:type" content={type} />
+<meta property="og:site_name" content={siteName} />
+<meta property="og:title" content={title} />
+<meta property="og:description" content={description} />
+<meta property="og:url" content={canonical} />
+<meta property="og:locale" content="en_GB" />
+<meta property="og:image" content={image} />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:image:alt" content={ogImageAlt} />
+
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={title} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={image} />
+<meta name="twitter:image:alt" content={ogImageAlt} />

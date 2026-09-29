@@ -1,0 +1,27 @@
+---
+/**
+ * 404 — links back to all three areas (CLAUDE.md §3.1). GitHub Pages serves dist/404.html.
+ */
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { NAV } from '@/lib/site';
+import { url } from '@/lib/url';
+---
+
+<BaseLayout
+  path="/404"
+  title="Page not found"
+  description="The page you were looking for does not exist. Continue to Home, Work Experience or Academic."
+  noindex
+>
+  <section aria-labelledby="not-found-title">
+    <h1 id="not-found-title">Page not found</h1>
+    <p>The page you were looking for does not exist or has moved.</p>
+    <ul>
+      {NAV.map((item) => (
+        <li>
+          <a href={url(item.path)}>{item.label}</a>
+        </li>
+      ))}
+    </ul>
+  </section>
+</BaseLayout>

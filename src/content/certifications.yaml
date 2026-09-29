@@ -1,0 +1,11 @@
+# Certifications — one list item per certificate; `id` must be unique (kebab-case).
+# Schema: src/content.config.ts (certifications).
+
+- id: todo-certification
+  name: 'TODO(ioannis): certification name'
+  issuer: 'TODO(ioannis): issuing organisation'
+  date: 'TODO(ioannis): issue date as YYYY-MM'
+  credentialId: 'TODO(ioannis): credential ID, if any'
+  links:
+    credential: 'TODO(ioannis): verification URL, if any'
+  featured: false
