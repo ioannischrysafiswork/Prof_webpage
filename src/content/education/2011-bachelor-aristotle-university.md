@@ -1,7 +1,8 @@
 ---
 # Source: cv-2025-08-17.pdf p2. Years only on the CV; grade not stated.
+# Degree title corrected by Ioannis (2026-09-30): the Bachelor's is in Physics.
 level: bachelor
-degree: "Bachelor's degree in Computational Physics"
+degree: "Bachelor's degree in Physics"
 institution: Aristotle University of Thessaloniki
 location: Thessaloniki, Greece
 start: '2011'
