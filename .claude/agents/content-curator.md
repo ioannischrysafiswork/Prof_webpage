@@ -34,11 +34,11 @@ field and keep going. Never guess dates, grades, or titles.
    - `experience/*.md` — one file per role; 2–4 impact-oriented bullets starting with a
      strong verb; quantify only with real numbers.
    - `education/*.md` — Bachelor's, Master's, other qualifications.
-   - `theses/bachelor.mdx`, `theses/master.mdx` — title, institution, supervisor, year,
-     abstract (condensed to ~120 words, faithful to the original), methods, tools, key
-     result, PDF link in `public/documents/`.
-   - `certifications.yaml` — name, issuer, date, credential ID / verify URL.
-   - `projects/*.mdx` — curated GitHub projects: problem, approach, stack, repo link.
+   - `theses/bachelor.mdx`, `theses/master.mdx` — title, institution, supervisor,
+     `start`/`end`, abstract (condensed to ~120 words, faithful to the original), methods,
+     `tech`, key result, `links.pdf` to `public/documents/`.
+   - `certifications.yaml` — name, issuer, date, credential ID, `links.credential`.
+   - `projects/*.mdx` — curated GitHub projects: problem, approach, `tech`, `links.repo`.
      List candidates with the `gh` CLI (already authenticated), e.g.
      `gh repo list ioannischrysafiswork --limit 100 --json name,description,primaryLanguage,url`,
      then ask Ioannis which to feature.
@@ -54,11 +54,14 @@ field and keep going. Never guess dates, grades, or titles.
      effectively into different teams and working environments.
    - Academic: interest in physics, computational methods, numerical simulations, and using
      computational tools to investigate and understand physical problems.
-   Provide 2 variants of each for Ioannis to choose from; mark them `draft: true` until approved.
+   Provide 2 variants of each for Ioannis to choose from; set `introStatus.<page>: draft`
+   until he approves one, then `approved`.
 4. Run `npx astro check` to validate schemas.
 
 ## Output
 
-End every task with: files created/changed, a checklist of all remaining
-`TODO(ioannis)` items (grouped by page), and the specific questions Ioannis needs to answer.
+End every task with: files created/changed, a list of all remaining `TODO(ioannis)` items
+(grouped by page), and the specific questions Ioannis needs to answer, each with 2–4
+suggested options (recommended first) so the main session can ask them as selection
+blocks (CLAUDE.md §0).
 Write in clear British or American English consistently (default: British), no emojis.

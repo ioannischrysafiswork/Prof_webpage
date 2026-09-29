@@ -26,13 +26,15 @@ Scope: `$ARGUMENTS` if given, otherwise everything in `source-material/`.
      date, credential ID.
    - `.md` / `.txt` notes → read directly.
 3. **Build the inventory** in `source-material/_inventory.md` (overwrite on each run) with
-   one table per collection, and a **Source** column pointing to file + page for every fact:
-   - Experience: role · organisation · location · start · end · key responsibilities/achievements · tech
-   - Education: degree · institution · programme · start · end · grade · focus
-   - Theses: level · title · supervisor · institution · year · abstract (verbatim excerpt) · methods · tools
-   - Certifications: name · issuer · date · credential ID · verify URL
-   - Skills: skill · evidence (where it was used)
-   - Academic work / projects: title · type · method · tools · link
+   one table per collection, and a **Source** column pointing to file + page for every fact.
+   Column names follow the schema field names in `src/content.config.ts` so facts map
+   one-to-one onto content files:
+   - Experience: role · organisation · location · employmentType · start · end · highlights (responsibilities/achievements) · tech
+   - Education: level · degree · institution · location · start · end · grade · focus · keyCourses
+   - Theses: level · title · supervisor · coSupervisors · institution · department · start · end (submission date) · grade · abstract (verbatim excerpt) · methods · tech · keyResult
+   - Certifications: name · issuer · date · expires · credentialId · links.credential (verification URL)
+   - Skills: group · name · context (where it was used — the evidence)
+   - Projects / academic work: title · type · course · start · end · summary · methods · tech · links (repo / code / report / demo)
    - Personal: interests, hobbies, languages (only if written by Ioannis)
 4. **Conflicts**: if two documents disagree (e.g. different end dates), list both with
    sources under "Conflicts — needs Ioannis". Never pick one silently.

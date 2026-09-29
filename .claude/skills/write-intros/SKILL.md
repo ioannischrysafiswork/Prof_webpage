@@ -37,6 +37,9 @@ Target: `$ARGUMENTS` (default: `all`).
 2. Write **two variants** per requested intro (A: warmer, B: more concise). Show them to
    Ioannis with word counts.
 3. After he chooses (or edits), write the chosen text to `profile.yaml` under
-   `intro.<page>` and set `introStatus.<page>: approved`. Until then store as
-   `introStatus.<page>: draft`.
+   `intro.<page>` and set `introStatus.<page>: approved`. Until then store the preferred
+   draft (variant A unless told otherwise) in `intro.<page>` with
+   `introStatus.<page>: draft`. `introStatus` values are exactly `todo | draft | approved`;
+   there is no `draft: true` flag in the schema. `intro.<page>` must never be empty — keep
+   the `TODO(ioannis): …` placeholder until a draft exists.
 4. If Ioannis edits the wording himself, keep his wording exactly.
