@@ -13,7 +13,7 @@ value with verified data or `TODO(ioannis): …`, and delete optional lines you 
 | Dates (`start`, `end`, `date`, `expires`) | Quoted ISO string: `'2024-03'` (preferred) or `'2024'`. `end` may also be `'present'`. Always quote dates so YAML keeps them as strings. |
 | Placeholders | `'TODO(ioannis): <what is needed>'` — the text after the colon is required; a bare `TODO(ioannis)` fails validation on date, link and enum fields. Allowed in any text, date, enum or link field. |
 | `tech` | The **only** name for tools / stack / software lists, in every collection. |
-| `links` | One optional object with any subset of `repo`, `demo`, `pdf`, `credential`, `code`, `report`, `website`. Values: absolute `https://…` URL, site-relative path to a file in `public/` (e.g. `/documents/master-thesis.pdf`), or a TODO placeholder. No other keys, no top-level `repo:` / `pdf:` / `verifyUrl:` fields. |
+| `links` | One optional object with any subset of `repo`, `demo`, `pdf`, `credential`, `code`, `report`, `slides`, `website`. Values: absolute `https://…` URL, site-relative path to a file in `public/` (e.g. `/documents/master-thesis.pdf`), or a TODO placeholder. No other keys, no top-level `repo:` / `pdf:` / `verifyUrl:` fields. |
 | `images` | Optional list of `{ src, alt, caption? }`. `src` is a path **relative to the content file** pointing into `src/assets/` (the file must exist); `alt` is required; `images[0]` is the cover / key figure. |
 | `featured` | `true` surfaces the entry in the Home highlights (never copy its text elsewhere). Default `false`. Not available on skills or interests. |
 | `order` | Number, ascending tie-breaker / order for undated lists. Default `0`. |

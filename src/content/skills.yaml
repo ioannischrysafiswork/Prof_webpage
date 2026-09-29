@@ -28,7 +28,7 @@
     - name: Finite-difference time-domain (FDTD) method
       context: Maxwell's equations with Yee's algorithm, absorbing boundaries, dipole radiation, layered dielectrics and waveguides (MSc, Computational Electromagnetism)
     - name: Density functional theory (DFT) with CP2K
-      context: Ground-state geometry optimisation of bioactive molecules — Quickstep/GPW, PBE, GTH pseudopotentials, SCF convergence (MSc thesis)
+      context: Ground-state geometry optimisation of bioactive molecules — Quickstep/GAPW, PBE, GTH pseudopotentials, SCF convergence (MSc thesis)
     - name: OpenMP
       context: Parallel programming (MSc)
     - name: HPC clusters

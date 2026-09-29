@@ -64,6 +64,7 @@ const links = z
     credential: link, // certificate verification page
     code: link, // code for academic work, if not a full repo
     report: link, // written report
+    slides: link, // presentation slides (PDF), e.g. a thesis defence
     website: link, // organisation / project homepage
   })
   .partial()

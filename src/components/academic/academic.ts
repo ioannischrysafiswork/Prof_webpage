@@ -67,6 +67,7 @@ export const THESIS_LABEL: Record<Level, string> = {
 const LINK_META: Record<keyof Links, { label: string; icon: string }> = {
   pdf: { label: 'PDF', icon: 'lucide:file-text' },
   report: { label: 'Report', icon: 'lucide:file-text' },
+  slides: { label: 'Presentation slides (PDF)', icon: 'lucide:presentation' },
   code: { label: 'Code', icon: 'lucide:code' },
   repo: { label: 'Repository', icon: 'simple-icons:github' },
   demo: { label: 'Demo', icon: 'lucide:play' },

@@ -31,6 +31,7 @@ const LINK_LABELS: Record<LinkKey, string> = {
   demo: 'Live demo',
   code: 'Code',
   report: 'Report',
+  slides: 'Presentation slides (PDF)',
   pdf: 'Document (PDF)',
   credential: 'Credential',
 };
@@ -41,6 +42,7 @@ const DEFAULT_ORDER: readonly LinkKey[] = [
   'demo',
   'code',
   'report',
+  'slides',
   'pdf',
   'credential',
 ];

@@ -4,7 +4,9 @@
 # it is the Master's thesis; English title "Ground-State Simulations of Bioactive Molecules"
 # (Greek: «Προσομοιώσεις σταθερής κατάστασης βιοενεργών μορίων»); supervisor
 # Prof. Joseph Kioseoglou; submitted 2023. The abstract summarises the presentation, which
-# has no separate abstract.
+# has no separate abstract. Input details (GAPW, OT with CG, LBFGS, DIRECT_CELL_OPT, EMSL
+# basis sets) are read from the CP2K input shown on slides 11–18. English slides:
+# public/documents/master-thesis-presentation-en.pdf (translated from the Greek deck).
 level: master
 title: Ground-State Simulations of Bioactive Molecules
 supervisor: Prof. Joseph Kioseoglou
@@ -14,7 +16,7 @@ end: '2023'
 abstract: >-
   Using density functional theory (DFT) in the open-source CP2K package, I searched for the
   lowest-energy states of bioactive molecules by optimising their geometry. The electronic
-  structure was computed with CP2K's Quickstep method (mixed Gaussian and plane-wave, GPW),
+  structure was computed with CP2K's Quickstep method (Gaussian and augmented plane-wave, GAPW),
   GTH pseudopotentials and the PBE exchange–correlation functional, with geometry and
   electronic structure optimised together. Geometry optimisations were run for paracetamol,
   sildenafil, cytosine, cyclohexanedione, ethyl carbamate, oxalic acid and formamide. For
@@ -24,8 +26,9 @@ abstract: >-
 methods:
   - Density functional theory (DFT)
   - Geometry optimisation
-  - Gaussian and plane-wave method (GPW)
-  - Self-consistent field (SCF) with orbital transformation (OT)
+  - Gaussian and augmented plane-wave method (GAPW)
+  - Self-consistent field (SCF) with orbital transformation (OT, conjugate-gradient minimiser)
+  - LBFGS cell and geometry optimisation (DIRECT_CELL_OPT)
   - PBE exchange–correlation functional
   - GTH pseudopotentials
 tech:
@@ -35,6 +38,8 @@ highlights:
   - Chose the CUTOFF and REL_CUTOFF grid settings from single-point runs by comparing run times.
   - Tuned the number of SCF iterations (MAX_SCF) by tracking minimum and mean energy and convergence after every SCF run.
   - Diagnosed runs that failed to converge or converged slowly (method for the electron potentials, orbital transformation, geometry optimiser) and fixed them by testing each change.
+links:
+  slides: /documents/master-thesis-presentation-en.pdf
 anchor: master-thesis
 featured: true
 ---
