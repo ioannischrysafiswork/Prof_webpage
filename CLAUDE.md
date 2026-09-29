@@ -144,6 +144,10 @@ CDN links, analytics that require cookie banners.
   **Preferred:** use a **custom domain** (e.g. `ioannischrysafis.com`, with `public/CNAME`)
   or a **user site** repo named `<username>.github.io`. Then `base` is `/` and URLs are
   exactly `/`, `/work`, `/academic`.
+- **Decision (Sep 2026):** user site. The GitHub repo is
+  `ioannischrysafiswork/ioannischrysafiswork.github.io` (renamed from `Prof_webpage`; the
+  local folder keeps its old name), `site` = `https://ioannischrysafiswork.github.io`,
+  `base` = `/`. Public URLs: `https://ioannischrysafiswork.github.io/work` and `/academic`.
 - Never hard-code internal links. Always build them with the `url()` helper in
   `src/lib/url.ts`, which respects `import.meta.env.BASE_URL`, so switching between project
   site and custom domain requires changing config only.

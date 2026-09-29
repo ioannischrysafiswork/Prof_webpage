@@ -1,0 +1,44 @@
+name: Deploy to GitHub Pages
+
+# Not live yet: the site deploys only when run manually (Actions → Deploy to GitHub Pages →
+# Run workflow). Once real content replaces the TODO(ioannis) placeholders, uncomment the
+# `push` trigger so every push to `main` deploys, and set Settings → Pages → Source:
+# "GitHub Actions".
+on:
+  # push:
+  #   branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+env:
+  # User site (CLAUDE.md §3.1): clean URLs at the root.
+  SITE_URL: https://ioannischrysafiswork.github.io
+  BASE_PATH: /
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Install, build and upload site
+        uses: withastro/action@v6
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5

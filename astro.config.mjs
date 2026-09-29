@@ -15,8 +15,10 @@ import rehypeKatex from 'rehype-katex';
  * `site` and `base` come from env vars so switching between a GitHub Pages
  * project site, a user site or a custom domain is config-only:
  *
- *   Project site (default): SITE_URL=https://ioannischrysafiswork.github.io  BASE_PATH=/Prof_webpage
- *   User site / custom domain:  SITE_URL=https://example.com                  BASE_PATH=/
+ *   User site (default, repo ioannischrysafiswork.github.io):
+ *                               SITE_URL=https://ioannischrysafiswork.github.io  BASE_PATH=/
+ *   Custom domain:              SITE_URL=https://example.com                     BASE_PATH=/
+ *   Project site:               SITE_URL=https://<user>.github.io                BASE_PATH=/<repo>
  *
  * Set them in a local `.env` file (git-ignored) or as env vars in the deploy workflow.
  * Internal links must always go through `url()` in `src/lib/url.ts`.
@@ -24,7 +26,7 @@ import rehypeKatex from 'rehype-katex';
 const env = loadEnv(process.env.NODE_ENV ?? 'production', process.cwd(), '');
 
 const DEFAULT_SITE = 'https://ioannischrysafiswork.github.io';
-const DEFAULT_BASE = '/Prof_webpage';
+const DEFAULT_BASE = '/';
 
 /** Normalise a base path to "/" or "/segment" (leading slash, no trailing slash). */
 function normaliseBase(/** @type {string | undefined} */ value) {

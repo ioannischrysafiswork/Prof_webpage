@@ -24,11 +24,11 @@ the file responsible.
    - no `TODO(ioannis)` leaks into production HTML (reported as **warning** while the
      site is still in draft, **error** with `--strict`)
    - `<img>` elements all have `alt`
-   Use `--strict` before the first public deploy. If the site is deployed as a project
-   site, pass the base path, e.g. `--base /Prof_webpage/` (must match `base` in
-   `astro.config.mjs`). In Git Bash on Windows, prefix the command with
-   `MSYS_NO_PATHCONV=1`, otherwise `/Prof_webpage/` is rewritten to a Windows path and
-   the nav-link check fails falsely.
+   Use `--strict` before the first public deploy. The site is a user site (`base` = `/`),
+   so no `--base` is needed. If it ever moves to a project site, pass the base path, e.g.
+   `--base /<repo>/` (must match `base` in `astro.config.mjs`); in Git Bash on Windows,
+   prefix that command with `MSYS_NO_PATHCONV=1`, otherwise the path is rewritten to a
+   Windows path and the nav-link check fails falsely.
 5. **Source hygiene** (Grep in `src/`):
    - internal links not using the `url()` helper: `href="/` or `href='/` in `.astro` files
    - raw hex colours in components (`#[0-9a-fA-F]{3,6}` outside `src/styles/`)
