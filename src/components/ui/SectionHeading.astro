@@ -1,0 +1,128 @@
+---
+/**
+ * Section heading with an optional eyebrow and description, plus a "#" permalink to the
+ * section (visible on hover/focus; always visible on touch screens).
+ *
+ * `anchor` is the id of the enclosing <section>/<article> (stable, e.g. "experience").
+ * The heading gets id `${anchor}-title` so the section can use aria-labelledby.
+ * Default slot: optional actions (e.g. a LinkButton) aligned with the heading.
+ */
+import Eyebrow from './Eyebrow.astro';
+
+interface Props {
+  /** Stable id of the section this heading labels (used for the "#" link). */
+  anchor: string;
+  title: string;
+  /** Heading element id. Default `${anchor}-title`. */
+  id?: string;
+  level?: 2 | 3 | 4;
+  eyebrow?: string;
+  description?: string;
+  class?: string;
+}
+
+const { anchor, title, id = `${anchor}-title`, level = 2, eyebrow, description } = Astro.props;
+const Heading = `h${level}` as 'h2' | 'h3' | 'h4';
+const hasActions = Astro.slots.has('default');
+---
+
+<div class:list={['section-heading', `section-heading--h${level}`, Astro.props.class]}>
+  {eyebrow && <Eyebrow>{eyebrow}</Eyebrow>}
+  <div class="section-heading__row">
+    <div class="section-heading__title-wrap">
+      <Heading id={id} class="section-heading__title">
+        {title}
+      </Heading>
+      <a href={`#${anchor}`} class="heading-anchor">
+        <span aria-hidden="true">#</span>
+        <span class="sr-only">Link to this section: {title}</span>
+      </a>
+    </div>
+    {hasActions && (
+      <div class="section-heading__actions">
+        <slot />
+      </div>
+    )}
+  </div>
+  {description && <p class="section-heading__description">{description}</p>}
+</div>
+
+<style>
+  .section-heading {
+    display: grid;
+    gap: var(--space-sm);
+    margin-bottom: var(--spacing-block);
+  }
+
+  .section-heading--h3,
+  .section-heading--h4 {
+    gap: var(--space-xs);
+    margin-bottom: var(--space-md);
+  }
+
+  .section-heading__row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-sm) var(--space-lg);
+  }
+
+  .section-heading__title-wrap {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-xs);
+    min-width: 0;
+  }
+
+  .section-heading--h3 .section-heading__title {
+    font-size: var(--text-2xl);
+    line-height: var(--text-2xl--line-height);
+  }
+
+  .section-heading--h4 .section-heading__title {
+    font-size: var(--text-xl);
+    line-height: var(--text-xl--line-height);
+  }
+
+  .heading-anchor {
+    flex: none;
+    padding-inline: var(--space-2xs);
+    font-family: var(--font-mono);
+    font-size: var(--text-base);
+    color: var(--color-muted);
+    text-decoration: none;
+    opacity: 0;
+    transition:
+      opacity var(--duration-fast) var(--ease-standard),
+      color var(--duration-fast) var(--ease-standard);
+  }
+
+  .section-heading__title-wrap:hover .heading-anchor,
+  .heading-anchor:focus-visible {
+    opacity: 1;
+  }
+
+  .heading-anchor:hover {
+    color: var(--tint);
+  }
+
+  @media (hover: none) {
+    .heading-anchor {
+      opacity: 1;
+    }
+  }
+
+  .section-heading__description {
+    max-width: var(--container-measure);
+    font-size: var(--text-lg);
+    line-height: var(--text-lg--line-height);
+    color: var(--color-muted);
+  }
+
+  .section-heading__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs);
+  }
+</style>

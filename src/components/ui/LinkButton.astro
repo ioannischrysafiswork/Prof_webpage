@@ -1,0 +1,62 @@
+---
+/**
+ * A link styled as a button (CTA, "View repository", "Download PDF").
+ *
+ * `href` must already be final: internal paths built with `url()`, or absolute URLs.
+ * External links (http/https) get an "↗" icon automatically; they open in the same tab.
+ * Printed pages show the full URL after the link (external, or internal via data-print-url).
+ */
+import type { HTMLAttributes } from 'astro/types';
+import { Icon } from 'astro-icon/components';
+import { absoluteHref } from '@/lib/url';
+
+interface Props extends Omit<HTMLAttributes<'a'>, 'class' | 'href'> {
+  href: string;
+  variant?: 'primary' | 'secondary' | 'quiet';
+  size?: 'sm' | 'md';
+  /** Iconify name; default: arrow-up-right for external links, none otherwise. */
+  icon?: string;
+  iconPosition?: 'start' | 'end';
+  /** Override external detection. */
+  external?: boolean;
+  /** Hide the URL in print (e.g. for purely navigational CTAs). */
+  printUrl?: boolean;
+  class?: string;
+}
+
+const {
+  href,
+  variant = 'secondary',
+  size = 'md',
+  icon,
+  iconPosition = 'end',
+  external = /^https?:\/\//i.test(href),
+  printUrl = true,
+  class: className,
+  ...attrs
+} = Astro.props;
+
+const iconName = icon ?? (external ? 'lucide:arrow-up-right' : undefined);
+const iconClass = [
+  'btn__icon',
+  `btn__icon--${iconPosition}`,
+  external && !icon ? 'btn__icon--external' : '',
+].join(' ');
+const printHref = printUrl && !external ? absoluteHref(href) : undefined;
+---
+
+<a
+  href={href}
+  class:list={['btn', `btn--${variant}`, `btn--${size}`, className]}
+  data-print-url={printHref}
+  data-no-print-url={printUrl ? undefined : ''}
+  {...attrs}
+>
+  {iconName && iconPosition === 'start' && (
+    <Icon name={iconName} class={iconClass} aria-hidden="true" />
+  )}
+  <slot />
+  {iconName && iconPosition === 'end' && (
+    <Icon name={iconName} class={iconClass} aria-hidden="true" />
+  )}
+</a>

@@ -1,0 +1,38 @@
+---
+/**
+ * A wrapped list of chips, e.g. a tech stack: <ChipList items={data.tech} label="Tools" />.
+ * Renders nothing when `items` is empty.
+ */
+import type { Tint } from '@/lib/site';
+import Chip from './Chip.astro';
+
+interface Props {
+  items: readonly string[];
+  /** Accessible name for the list (e.g. "Technologies used"). */
+  label?: string;
+  variant?: 'default' | 'tint' | 'outline';
+  size?: 'sm' | 'md';
+  tint?: Tint;
+  class?: string;
+}
+
+const { items, label, variant, size, tint, class: className } = Astro.props;
+---
+
+{items.length > 0 && (
+  <ul class:list={['chip-list', className]} aria-label={label}>
+    {items.map((item) => (
+      <Chip as="li" variant={variant} size={size} tint={tint}>
+        {item}
+      </Chip>
+    ))}
+  </ul>
+)}
+
+<style>
+  .chip-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs);
+  }
+</style>

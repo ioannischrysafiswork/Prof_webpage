@@ -1,0 +1,102 @@
+---
+/**
+ * A page section with a stable anchor: <section id aria-labelledby> + SectionHeading.
+ *
+ *   <Section id="experience" eyebrow="Career" title="Experience">…</Section>
+ *
+ * Level-2 sections include the page frame (container-page) and a hairline divider above.
+ * Nested level-3/4 sections (e.g. #bachelor-degree inside #degrees) render without frame
+ * or divider. Slots: default (content), "actions" (next to the heading).
+ */
+import type { Tint } from '@/lib/site';
+import SectionHeading from './SectionHeading.astro';
+
+interface Props {
+  /** Stable, permanent anchor id (never rename: it is linked from CVs). */
+  id: string;
+  title: string;
+  eyebrow?: string;
+  description?: string;
+  level?: 2 | 3 | 4;
+  as?: 'section' | 'article';
+  tint?: Tint;
+  /** Wrap in the page frame. Default: true for level 2. */
+  contained?: boolean;
+  /** Hairline rule above the section. Default: true for level 2. */
+  divider?: boolean;
+  class?: string;
+}
+
+const {
+  id,
+  title,
+  eyebrow,
+  description,
+  level = 2,
+  as: Tag = 'section',
+  tint,
+  contained = level === 2,
+  divider = level === 2,
+  class: className,
+} = Astro.props;
+const titleId = `${id}-title`;
+const heading = { anchor: id, id: titleId, title, eyebrow, description, level };
+---
+
+<Tag
+  id={id}
+  aria-labelledby={titleId}
+  data-tint={tint}
+  class:list={['section', `section--h${level}`, { 'section--divider': divider }, className]}
+>
+  <div class:list={['section__inner', { 'container-page': contained }]}>
+    {Astro.slots.has('actions') ? (
+      <SectionHeading {...heading}>
+        <slot name="actions" />
+      </SectionHeading>
+    ) : (
+      <SectionHeading {...heading} />
+    )}
+    <slot />
+  </div>
+</Tag>
+
+<style>
+  .section--h2 {
+    padding-block: var(--spacing-section);
+  }
+
+  .section--h2.section--divider > .section__inner {
+    position: relative;
+  }
+
+  /* The rule sits inside the frame so it aligns with content, not the viewport edge. */
+  .section--h2.section--divider > .section__inner::before {
+    content: '';
+    position: absolute;
+    top: calc(var(--spacing-section) * -1);
+    inset-inline: var(--spacing-gutter);
+    border-top: var(--rule-width) solid var(--color-border);
+  }
+
+  .section--h3,
+  .section--h4 {
+    margin-top: var(--spacing-block);
+  }
+
+  .section--h3.section--divider,
+  .section--h4.section--divider {
+    padding-top: var(--spacing-block);
+    border-top: var(--rule-width) solid var(--color-border);
+  }
+
+  @media print {
+    .section--h2 {
+      padding-block: var(--print-gap) 0;
+    }
+
+    .section--h2.section--divider > .section__inner::before {
+      display: none;
+    }
+  }
+</style>

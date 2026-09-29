@@ -1,10 +1,13 @@
 ---
 /**
  * Home — `/` (CLAUDE.md §2.1). Permanent route.
- * Placeholder skeleton: home-page-builder fills in each section.
+ * Skeleton wired to the design system: home-page-builder fills in each section.
  * Stable anchors: #about, #highlights, #explore, #interests.
  */
 import BaseLayout from '@/layouts/BaseLayout.astro';
+import PageHeader from '@/components/ui/PageHeader.astro';
+import Section from '@/components/ui/Section.astro';
+import Card from '@/components/ui/Card.astro';
 import { getProfile } from '@/lib/profile';
 import { NAV } from '@/lib/site';
 import { url } from '@/lib/url';
@@ -14,30 +17,32 @@ const entryPoints = NAV.filter((item) => item.key !== 'home');
 ---
 
 <BaseLayout page="home" path="/">
-  <section id="about" aria-labelledby="about-title">
-    <h1 id="about-title">{profile.name}</h1>
-    <p>{profile.headline}</p>
+  <PageHeader id="about" title={profile.name} lede={profile.headline}>
     <p>{profile.intro.home}</p>
-  </section>
+  </PageHeader>
 
-  <section id="highlights" aria-labelledby="highlights-title">
-    <h2 id="highlights-title">Highlights</h2>
+  <Section id="highlights" eyebrow="At a glance" title="Highlights">
     {/* Degrees, key certifications, achievements — featured entries from the collections. */}
-  </section>
+  </Section>
 
-  <section id="explore" aria-labelledby="explore-title">
-    <h2 id="explore-title">Explore</h2>
-    <ul>
+  <Section id="explore" eyebrow="Explore" title="Explore">
+    <ul class="grid gap-6 md:grid-cols-2">
       {entryPoints.map((item) => (
-        <li>
-          <a href={url(item.path)}>{item.label}</a>
-        </li>
+        <Card
+          as="li"
+          variant="feature"
+          tint={item.key}
+          title={item.label}
+          headingLevel={3}
+          href={url(item.path)}
+        >
+          <p>{item.description}</p>
+        </Card>
       ))}
     </ul>
-  </section>
+  </Section>
 
-  <section id="interests" aria-labelledby="interests-title">
-    <h2 id="interests-title">Outside work</h2>
+  <Section id="interests" eyebrow="Outside work" title="Outside work">
     {/* Hobbies and interests from interests.yaml. */}
-  </section>
+  </Section>
 </BaseLayout>

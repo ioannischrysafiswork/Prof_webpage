@@ -1,0 +1,209 @@
+---
+/**
+ * Primary navigation: Home | Work Experience | Academic (order fixed by CLAUDE.md §2).
+ *
+ * - Active area: aria-current="page" + an underline in that area's tint.
+ * - < 40rem with JS: a compact disclosure menu (button with aria-expanded / aria-controls,
+ *   Escape closes and returns focus, click outside closes). Without JS the three links
+ *   simply stay visible — nothing is ever hidden behind a script.
+ * Behaviour lives in src/scripts/site.ts.
+ */
+import { Icon } from 'astro-icon/components';
+import { NAV, type PageKey } from '@/lib/site';
+import { url } from '@/lib/url';
+
+interface Props {
+  /** Current area, for aria-current. Omit on pages outside the three areas (e.g. 404). */
+  current?: PageKey;
+}
+
+const { current } = Astro.props;
+const listId = 'site-nav-list';
+---
+
+<nav class="nav" aria-label="Main" data-nav data-open="false">
+  <button
+    type="button"
+    class="nav-toggle"
+    aria-expanded="false"
+    aria-controls={listId}
+    data-nav-toggle
+  >
+    <Icon name="lucide:menu" class="nav-toggle__icon nav-toggle__icon--open" aria-hidden="true" />
+    <Icon name="lucide:x" class="nav-toggle__icon nav-toggle__icon--close" aria-hidden="true" />
+    <span class="nav-toggle__label">Menu</span>
+  </button>
+
+  <ul id={listId} class="nav__list">
+    {NAV.map((item) => (
+      <li>
+        <a
+          href={url(item.path)}
+          class="nav__link"
+          data-tint={item.key}
+          aria-current={item.key === current ? 'page' : undefined}
+        >
+          {item.label}
+        </a>
+      </li>
+    ))}
+  </ul>
+</nav>
+
+<style>
+  .nav {
+    display: flex;
+    align-items: center;
+  }
+
+  /* ---------------------------------------------------------------- Toggle */
+  .nav-toggle {
+    display: none;
+    align-items: center;
+    gap: var(--space-xs);
+    min-height: var(--size-target);
+    padding-inline: var(--space-sm);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
+    color: var(--color-foreground);
+    cursor: pointer;
+  }
+
+  .nav-toggle:hover {
+    background-color: var(--color-sunken);
+  }
+
+  .nav-toggle__icon {
+    width: var(--size-icon);
+    height: var(--size-icon);
+  }
+
+  .nav-toggle__icon--close,
+  .nav[data-open='true'] .nav-toggle__icon--open {
+    display: none;
+  }
+
+  .nav[data-open='true'] .nav-toggle__icon--close {
+    display: block;
+  }
+
+  /* ------------------------------------------------------------------ List */
+  .nav__list {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2xs);
+  }
+
+  .nav__link {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--size-target);
+    padding-inline: var(--space-sm);
+    font-size: var(--text-sm);
+    font-weight: 500;
+    color: var(--color-muted);
+    text-decoration: none;
+    white-space: nowrap;
+    transition: color var(--duration-fast) var(--ease-standard);
+  }
+
+  .nav__link::after {
+    content: '';
+    position: absolute;
+    left: var(--space-sm);
+    right: var(--space-sm);
+    bottom: var(--space-xs);
+    height: var(--rule-width-strong);
+    border-radius: var(--radius-full);
+    background-color: var(--tint);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform var(--duration-base) var(--ease-emphasized);
+  }
+
+  .nav__link:hover {
+    color: var(--color-foreground);
+  }
+
+  .nav__link:hover::after {
+    transform: scaleX(1);
+    background-color: var(--color-border-strong);
+  }
+
+  .nav__link[aria-current='page'] {
+    color: var(--color-foreground);
+  }
+
+  .nav__link[aria-current='page']::after {
+    transform: scaleX(1);
+    background-color: var(--tint);
+  }
+
+  /* ------------------------------------------- Compact menu (< 40rem, JS on) */
+  @media (width < 40rem) {
+    /* Without JS the links wrap onto a second row under the brand (see Header). */
+    :global(.js) .nav-toggle {
+      display: inline-flex;
+    }
+
+    :global(.js) .nav__list {
+      display: none;
+    }
+
+    :global(.js) .nav[data-open='true'] .nav__list {
+      position: absolute;
+      inset-inline: 0;
+      top: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0;
+      padding: var(--space-xs) var(--spacing-gutter) var(--space-md);
+      background-color: var(--color-background);
+      border-bottom: var(--rule-width) solid var(--color-border);
+      box-shadow: var(--shadow-sm);
+    }
+
+    :global(.js) .nav[data-open='true'] .nav__link {
+      display: flex;
+      padding-inline: var(--space-sm);
+      font-size: var(--text-base);
+      border-left: var(--rule-width-strong) solid transparent;
+    }
+
+    :global(.js) .nav[data-open='true'] .nav__link::after {
+      display: none;
+    }
+
+    :global(.js) .nav[data-open='true'] .nav__link[aria-current='page'] {
+      border-left-color: var(--tint);
+      background-color: var(--color-sunken);
+    }
+  }
+
+  /* Very narrow phones: icon-only toggle; the label stays available to screen readers. */
+  @media (width < 24rem) {
+    .nav-toggle {
+      padding-inline: var(--space-xs);
+    }
+
+    .nav-toggle__label {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .nav__link::after {
+      transition: none;
+    }
+  }
+</style>

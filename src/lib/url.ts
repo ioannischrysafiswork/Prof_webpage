@@ -76,3 +76,15 @@ export function stripBase(pathname: string): string {
   path = path.replace(/\/+$/, '');
   return path === '' ? '/' : path;
 }
+
+/**
+ * Absolute URL for an href that has ALREADY been built with `url()` (or is external).
+ * Used for print (`data-print-url`) so printed CVs show full links. Same-page anchors
+ * and special schemes (mailto:, tel:) return `undefined`.
+ */
+export function absoluteHref(href: string): string | undefined {
+  if (/^https?:\/\//i.test(href)) return href;
+  if (!href.startsWith('/') || href.startsWith('//')) return undefined;
+  const site = import.meta.env.SITE;
+  return site ? new URL(href, site).href : undefined;
+}

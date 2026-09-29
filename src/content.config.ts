@@ -72,7 +72,7 @@ const links = z
 /** Images processed by astro:assets; `images[0]` is the cover / key figure. */
 function figures(image: ImageFunction) {
   return z
-    .array(z.object({ src: image(), alt: z.string().min(1), caption: z.string().optional() }))
+    .array(z.strictObject({ src: image(), alt: z.string().min(1), caption: z.string().optional() }))
     .default([]);
 }
 
@@ -88,17 +88,17 @@ const profile = defineCollection({
   loader: glob({ pattern: 'profile.yaml', base: './src/content' }),
   schema: ({ image }) => {
     const introStatus = z.enum(['todo', 'draft', 'approved']).default('todo');
-    const pageSeo = z.object({
+    const pageSeo = z.strictObject({
       title: z.string().min(1),
       description: z.string().min(20),
     });
-    return z.object({
+    return z.strictObject({
       name: z.string().min(1),
       headline: z.string().min(1),
       /** City / country only — never a home address. */
       location: z.string().optional(),
       /** 4–5 line first-person intros, one per page (see write-intros skill). */
-      intro: z.object({
+      intro: z.strictObject({
         home: z.string().min(1),
         work: z.string().min(1),
         academic: z.string().min(1),
@@ -107,7 +107,7 @@ const profile = defineCollection({
         .object({ home: introStatus, work: introStatus, academic: introStatus })
         .default({ home: 'todo', work: 'todo', academic: 'todo' }),
       /** Per-page <title> and meta description; each page must stand on its own. */
-      seo: z.object({ home: pageSeo, work: pageSeo, academic: pageSeo }),
+      seo: z.strictObject({ home: pageSeo, work: pageSeo, academic: pageSeo }),
       /** Only contact details Ioannis has explicitly approved for public display. */
       contact: z
         .object({
@@ -116,7 +116,7 @@ const profile = defineCollection({
         .default({}),
       socials: z
         .array(
-          z.object({
+          z.strictObject({
             label: z.string().min(1), // e.g. "GitHub"
             url: link,
             icon: z.string().optional(), // Iconify name, e.g. "simple-icons:github"
@@ -124,9 +124,9 @@ const profile = defineCollection({
           }),
         )
         .default([]),
-      photo: z.object({ src: image(), alt: z.string().min(1) }).optional(),
+      photo: z.strictObject({ src: image(), alt: z.string().min(1) }).optional(),
       /** Downloadable CV PDFs in public/documents/. */
-      cv: z.object({ work: link, academic: link }).partial().default({}),
+      cv: z.strictObject({ work: link, academic: link }).partial().default({}),
     });
   },
 });
@@ -135,7 +135,7 @@ const profile = defineCollection({
 const experience = defineCollection({
   loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/experience' }),
   schema: ({ image }) =>
-    z.object({
+    z.strictObject({
       role: z.string().min(1),
       organisation: z.string().min(1),
       location: z.string().optional(),
@@ -168,7 +168,7 @@ const experience = defineCollection({
 const education = defineCollection({
   loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/education' }),
   schema: ({ image }) =>
-    z.object({
+    z.strictObject({
       level: z.enum(['bachelor', 'master', 'phd', 'other']),
       degree: z.string().min(1),
       institution: z.string().min(1),
@@ -194,7 +194,7 @@ const education = defineCollection({
 const theses = defineCollection({
   loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/theses' }),
   schema: ({ image }) =>
-    z.object({
+    z.strictObject({
       level: z.enum(['bachelor', 'master', 'phd', 'other']),
       title: z.string().min(1),
       supervisor: z.string().min(1),
@@ -222,7 +222,7 @@ const theses = defineCollection({
 /** List in `src/content/certifications.yaml`; each item needs a unique `id`. */
 const certifications = defineCollection({
   loader: file('src/content/certifications.yaml'),
-  schema: z.object({
+  schema: z.strictObject({
     id: z.string().min(1),
     name: z.string().min(1),
     issuer: z.string().min(1),
@@ -241,7 +241,7 @@ const certifications = defineCollection({
 const projects = defineCollection({
   loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/projects' }),
   schema: ({ image }) =>
-    z.object({
+    z.strictObject({
       title: z.string().min(1),
       /** One line: the problem it solves. */
       tagline: z.string().min(1),
@@ -260,7 +260,7 @@ const projects = defineCollection({
 const academicWork = defineCollection({
   loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/academic-work' }),
   schema: ({ image }) =>
-    z.object({
+    z.strictObject({
       title: z.string().min(1),
       type: z.union([
         z.enum([
@@ -294,12 +294,12 @@ const academicWork = defineCollection({
 /** Grouped skills with context of use — no ratings or percentages (CLAUDE.md §4). */
 const skills = defineCollection({
   loader: file('src/content/skills.yaml'),
-  schema: z.object({
+  schema: z.strictObject({
     id: z.string().min(1),
     group: z.string().min(1),
     items: z
       .array(
-        z.object({
+        z.strictObject({
           name: z.string().min(1),
           /** e.g. "numerical simulation, data analysis, automation". */
           context: z.string().optional(),
@@ -314,7 +314,7 @@ const skills = defineCollection({
 /** Hobbies and interests for Home: `src/content/interests.yaml`. */
 const interests = defineCollection({
   loader: file('src/content/interests.yaml'),
-  schema: z.object({
+  schema: z.strictObject({
     id: z.string().min(1),
     name: z.string().min(1),
     note: z.string().optional(),

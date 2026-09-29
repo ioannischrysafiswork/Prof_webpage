@@ -1,0 +1,62 @@
+---
+/**
+ * Print-only CV masthead (hidden on screen): name, headline and contact line, plus the
+ * URL of the online version. Gives printed / "Save as PDF" copies of /work and /academic
+ * a proper CV header. All data comes from profile.yaml; TODO placeholders are skipped.
+ */
+import { isTodo } from '@/lib/dates';
+import type { Profile } from '@/lib/profile';
+import { absoluteUrl } from '@/lib/url';
+
+interface Props {
+  profile: Profile;
+  /** Site path of the page, e.g. '/work'. */
+  path: string;
+}
+
+const { profile, path } = Astro.props;
+
+const show = (value: string | undefined | null): value is string =>
+  typeof value === 'string' && value.trim() !== '' && !isTodo(value);
+
+const contact = [
+  show(profile.contact.email) ? profile.contact.email : undefined,
+  ...profile.socials
+    .filter((social) => show(social.url))
+    .map((social) => social.url.replace(/^https?:\/\//, '')),
+].filter(show);
+const pageUrl = absoluteUrl(path).replace(/^https?:\/\//, '');
+---
+
+<div class="print-only print-masthead">
+  <p class="print-masthead__name">{profile.name}</p>
+  {show(profile.headline) && <p class="print-masthead__headline">{profile.headline}</p>}
+  <p class="print-masthead__contact">
+    {[...contact, show(profile.location) ? profile.location : undefined].filter(show).join(' · ')}
+  </p>
+  <p class="print-masthead__contact">Online version: {pageUrl}</p>
+</div>
+
+<style>
+  /* Only displayed in print, where the type/space tokens are in pt (global.css §7). */
+  .print-masthead {
+    margin-bottom: var(--space-lg);
+    padding-bottom: var(--space-md);
+    border-bottom: var(--rule-width) solid var(--color-foreground);
+  }
+
+  .print-masthead__name {
+    font-family: var(--font-serif);
+    font-size: var(--text-5xl);
+    line-height: var(--leading-display);
+  }
+
+  .print-masthead__headline {
+    font-size: var(--text-lg);
+  }
+
+  .print-masthead__contact {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+  }
+</style>

@@ -1,0 +1,32 @@
+---
+/**
+ * Vertical timeline (the site's signature component), shared by /work and /academic.
+ * A semantic <ol> of <TimelineItem>s; nodes use the section tint (page default or `tint`).
+ * Pass items already sorted (sortByDateDesc for Work, sortByDateAsc for the roadmap).
+ *
+ *   <Timeline label="Work experience, most recent first">
+ *     {entries.map(({ data }) => <TimelineItem title={data.role} … />)}
+ *   </Timeline>
+ */
+import type { Tint } from '@/lib/site';
+
+interface Props {
+  /** Accessible name for the list, e.g. "Work experience, most recent first". */
+  label?: string;
+  tint?: Tint;
+  class?: string;
+}
+
+const { label, tint, class: className } = Astro.props;
+---
+
+<ol class:list={['timeline', className]} aria-label={label} data-tint={tint}>
+  <slot />
+</ol>
+
+<style>
+  .timeline {
+    display: grid;
+    max-width: calc(var(--tl-date-col) + var(--tl-rail) + var(--container-measure));
+  }
+</style>

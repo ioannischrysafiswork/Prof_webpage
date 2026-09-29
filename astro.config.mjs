@@ -60,12 +60,9 @@ export default defineConfig({
       rehypePlugins: [rehypeKatex],
     }),
     shikiConfig: {
-      // Placeholder dual theme; design-system replaces it with a palette-matched theme.
-      themes: {
-        light: 'github-light',
-        dark: 'github-dark',
-      },
-      defaultColor: false,
+      // Palette-matched highlighting: token colours are CSS variables
+      // (--astro-code-*) defined for both themes in src/styles/global.css.
+      theme: 'css-variables',
       wrap: true,
     },
   },

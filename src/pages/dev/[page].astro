@@ -1,0 +1,178 @@
+---
+/**
+ * DEV-ONLY component styleguide: http://localhost:4321/<base>/dev/styleguide
+ * getStaticPaths returns nothing in production, so this page is never built or deployed.
+ *
+ * Every text below is SAMPLE copy for visual testing — it is not data about Ioannis and
+ * must never be copied into content files or pages.
+ */
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import PageHeader from '@/components/ui/PageHeader.astro';
+import Section from '@/components/ui/Section.astro';
+import Card from '@/components/ui/Card.astro';
+import Chip from '@/components/ui/Chip.astro';
+import ChipList from '@/components/ui/ChipList.astro';
+import Button from '@/components/ui/Button.astro';
+import LinkButton from '@/components/ui/LinkButton.astro';
+import Eyebrow from '@/components/ui/Eyebrow.astro';
+import Prose from '@/components/ui/Prose.astro';
+import Reveal from '@/components/ui/Reveal.astro';
+import Timeline from '@/components/timeline/Timeline.astro';
+import TimelineItem from '@/components/timeline/TimelineItem.astro';
+import { url } from '@/lib/url';
+
+export function getStaticPaths() {
+  if (!import.meta.env.DEV) return [];
+  return [{ params: { page: 'styleguide' } }];
+}
+
+const sample = {
+  highlights: [
+    'Sample highlight: an impact-oriented bullet of typical length for layout testing.',
+    'Second sample bullet that is a little longer so that it wraps onto a second line on narrow screens.',
+  ],
+  tech: ['Python', 'NumPy', 'Sample tool', 'Another tool'],
+};
+---
+
+<BaseLayout path="/dev/styleguide" title="Styleguide (dev only)" noindex page="work">
+  <PageHeader eyebrow="Design system" title="Styleguide" lede="Sample content for visual QA only.">
+    <p>
+      Body copy in Inter at the base step of the fluid scale, 1.6 line height and a 70ch measure.
+      This paragraph is placeholder text used to judge rhythm, colour and contrast.
+    </p>
+    <Fragment slot="actions">
+      <LinkButton href={url('/work')} variant="primary" icon="lucide:arrow-right">
+        Primary link
+      </LinkButton>
+      <LinkButton href="https://example.com">External secondary</LinkButton>
+      <Button variant="quiet" icon="lucide:download">
+        Quiet button
+      </Button>
+    </Fragment>
+  </PageHeader>
+
+  <Section id="timeline" eyebrow="Signature" title="Timeline" description="Sample entries.">
+    <Timeline label="Sample timeline">
+      <TimelineItem
+        title="Sample role, ongoing"
+        subtitle="Sample Organisation"
+        meta={['Sample City', 'Full-time']}
+        start="2023-04"
+        end="present"
+        showDuration
+        summary="One-sentence sample summary describing the scope of a role."
+        highlights={sample.highlights}
+        tech={sample.tech}
+        links={[{ label: 'Sample link', href: 'https://example.com' }]}
+        open
+      />
+      <TimelineItem
+        title="Sample role with a considerably longer title that wraps"
+        subtitle="Another Sample Organisation"
+        meta={['Remote']}
+        start="2021-01"
+        end="2023-03"
+        showDuration
+        summary="Sample summary."
+        highlights={sample.highlights}
+      />
+      <TimelineItem
+        title="Sample degree"
+        subtitle="Sample University"
+        start="2016"
+        end="2020"
+        collapsible={false}
+        tech={['Sample method']}
+      />
+    </Timeline>
+  </Section>
+
+  <Section id="cards" eyebrow="Components" title="Cards, chips & labels">
+    <ul class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <Card as="li" title="Linked card" href={url('/work')} meta="Sample · 2024">
+        <p>Sample one-line problem statement for a project card.</p>
+        <ChipList slot="footer" items={sample.tech} size="sm" />
+      </Card>
+      <Card as="li" title="External card" href="https://example.com" eyebrow="Sample">
+        <p>Card whose title links to an external URL.</p>
+        <LinkButton slot="footer" href="https://example.com" variant="quiet" size="sm">
+          Footer link
+        </LinkButton>
+      </Card>
+      <Card as="li" title="Static card" variant="plain">
+        <p>Plain variant without a surface.</p>
+      </Card>
+      <Card as="li" variant="feature" tint="academic" title="Feature · academic" href="#cards">
+        <p>Feature card with the academic tint.</p>
+      </Card>
+      <Card as="li" variant="feature" tint="work" title="Feature · work" href="#cards">
+        <p>Feature card with the work tint.</p>
+      </Card>
+    </ul>
+    <div class="mt-8 flex flex-wrap items-center gap-3">
+      <Chip>Default chip</Chip>
+      <Chip variant="tint">Tint chip</Chip>
+      <Chip variant="outline">Outline chip</Chip>
+      <Chip size="sm">Small chip</Chip>
+      <Eyebrow tint="home">Home tint</Eyebrow>
+      <Eyebrow tint="work">Work tint</Eyebrow>
+      <Eyebrow tint="academic">Academic tint</Eyebrow>
+    </div>
+  </Section>
+
+  <Section id="prose" eyebrow="Markdown" title="Prose">
+    <Prose>
+      <p>
+        A paragraph with <a href="#prose">an inline link</a>, <strong>strong text</strong> and
+        <code>inline_code()</code>.
+      </p>
+      <h3>A subheading</h3>
+      <ul>
+        <li>First sample list item</li>
+        <li>Second sample list item</li>
+      </ul>
+      <blockquote>
+        <p>A sample pull quote in the serif italic.</p>
+      </blockquote>
+      <pre class="astro-code"><code><span style="color:var(--astro-code-token-keyword)">def</span> <span style="color:var(--astro-code-token-function)">step</span>(x, dt):
+    <span style="color:var(--astro-code-token-comment)"># sample comment</span>
+    <span style="color:var(--astro-code-token-keyword)">return</span> x <span style="color:var(--astro-code-token-punctuation)">+</span> <span style="color:var(--astro-code-token-constant)">0.5</span> <span style="color:var(--astro-code-token-punctuation)">*</span> dt  <span style="color:var(--astro-code-token-string)">"text"</span></code></pre>
+      <table>
+        <thead>
+          <tr>
+            <th>Quantity</th>
+            <th>Value</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Sample</td>
+            <td>1.00</td>
+          </tr>
+        </tbody>
+      </table>
+    </Prose>
+  </Section>
+
+  <Section id="utilities" eyebrow="Tokens" title="Utility probe">
+    <div
+      id="utility-probe"
+      class="max-w-measure gap-block rounded-md border border-border bg-surface p-gutter py-section leading-body tracking-label text-tint shadow-sm ease-standard"
+    >
+      Token-based Tailwind utilities (checked by QA).
+    </div>
+  </Section>
+
+  <Section id="reveal" eyebrow="Motion" title="Reveal">
+    <div class="grid gap-4 md:grid-cols-3">
+      {[0, 1, 2].map((i) => (
+        <Reveal stagger={i}>
+          <Card title={`Reveal ${i + 1}`}>
+            <p>Fades up when scrolled into view.</p>
+          </Card>
+        </Reveal>
+      ))}
+    </div>
+  </Section>
+</BaseLayout>

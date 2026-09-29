@@ -1,0 +1,65 @@
+---
+/**
+ * Light/dark toggle (a toggle button: aria-pressed = dark theme on).
+ * Hidden without JS (the OS preference still applies via `color-scheme`).
+ * Behaviour lives in src/scripts/site.ts (event delegation, survives page swaps).
+ */
+import { Icon } from 'astro-icon/components';
+---
+
+<button
+  type="button"
+  class="theme-toggle"
+  data-theme-toggle
+  aria-pressed="false"
+  title="Toggle dark theme"
+>
+  <span class="sr-only">Dark theme</span>
+  <Icon name="lucide:sun" class="theme-toggle__icon theme-toggle__icon--light" aria-hidden="true" />
+  <Icon name="lucide:moon" class="theme-toggle__icon theme-toggle__icon--dark" aria-hidden="true" />
+</button>
+
+<style>
+  .theme-toggle {
+    display: none;
+    place-items: center;
+    width: var(--size-target);
+    height: var(--size-target);
+    border-radius: var(--radius-full);
+    color: var(--color-muted);
+    transition:
+      color var(--duration-fast) var(--ease-standard),
+      background-color var(--duration-fast) var(--ease-standard);
+    cursor: pointer;
+  }
+
+  :global(.js) .theme-toggle {
+    display: inline-grid;
+  }
+
+  .theme-toggle:hover {
+    color: var(--color-foreground);
+    background-color: var(--color-sunken);
+  }
+
+  .theme-toggle__icon {
+    grid-area: 1 / 1;
+    width: var(--size-icon);
+    height: var(--size-icon);
+    transition:
+      opacity var(--duration-base) var(--ease-standard),
+      rotate var(--duration-base) var(--ease-standard);
+  }
+
+  /* Show the icon of the active theme. */
+  .theme-toggle__icon--dark,
+  :global([data-theme='dark']) .theme-toggle__icon--light {
+    opacity: 0;
+    rotate: -45deg;
+  }
+
+  :global([data-theme='dark']) .theme-toggle__icon--dark {
+    opacity: 1;
+    rotate: 0deg;
+  }
+</style>

@@ -1,10 +1,12 @@
 ---
 /**
- * Site header with the primary navigation (Home | Work Experience | Academic).
- * Scaffold only: design-system adds styling, the mobile menu and the theme toggle.
+ * Site header: monogram + name (links Home) on the left; primary navigation and the
+ * theme toggle on the right. Sticky, solid background, hairline rule.
  */
-import { NAV, type PageKey } from '@/lib/site';
+import type { PageKey } from '@/lib/site';
 import { url } from '@/lib/url';
+import Nav from './Nav.astro';
+import ThemeToggle from './ThemeToggle.astro';
 
 interface Props {
   /** Current area, for aria-current. Omit on pages outside the three areas (e.g. 404). */
@@ -13,19 +15,109 @@ interface Props {
 }
 
 const { current, siteName } = Astro.props;
+
+/** Monogram derived from the name in profile.yaml (first + last initial). */
+const words = siteName.trim().split(/\s+/).filter(Boolean);
+const initials = [words[0], words.length > 1 ? words[words.length - 1] : undefined]
+  .filter((word): word is string => Boolean(word))
+  .map((word) => word.charAt(0).toUpperCase())
+  .join('');
 ---
 
-<header>
-  <a href={url('/')}>{siteName}</a>
-  <nav aria-label="Main">
-    <ul>
-      {NAV.map((item) => (
-        <li>
-          <a href={url(item.path)} aria-current={item.key === current ? 'page' : undefined}>
-            {item.label}
-          </a>
-        </li>
-      ))}
-    </ul>
-  </nav>
+<header class="site-header">
+  <div class="site-header__inner container-page">
+    <a href={url('/')} class="brand">
+      <span class="brand__mark" aria-hidden="true">
+        {initials}
+      </span>
+      <span class="brand__name">{siteName}</span>
+    </a>
+    <div class="site-header__actions">
+      <Nav current={current} />
+      <ThemeToggle />
+    </div>
+  </div>
 </header>
+
+<style>
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: var(--z-header);
+    background-color: var(--color-background);
+    border-bottom: var(--rule-width) solid var(--color-border);
+  }
+
+  .site-header__inner {
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    column-gap: var(--space-md);
+    min-height: var(--header-height);
+  }
+
+  /* With JS the menu collapses into a button, so one row always fits; the dropdown panel
+     is positioned against the full-width header, not the frame. */
+  :global(.js) .site-header__inner {
+    position: static;
+    flex-wrap: nowrap;
+  }
+
+  .brand {
+    min-width: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-sm);
+    min-height: var(--size-target);
+    text-decoration: none;
+    color: var(--color-foreground);
+  }
+
+  .brand__mark {
+    display: inline-grid;
+    place-items: center;
+    width: var(--size-mark);
+    height: var(--size-mark);
+    border: var(--rule-width) solid var(--color-border-strong);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-serif);
+    font-size: var(--text-sm);
+    font-weight: 500;
+    transition:
+      border-color var(--duration-fast) var(--ease-standard),
+      background-color var(--duration-fast) var(--ease-standard);
+  }
+
+  .brand:hover .brand__mark {
+    border-color: var(--color-foreground);
+  }
+
+  .brand__mark {
+    flex: none;
+  }
+
+  .brand__name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-family: var(--font-serif);
+    font-size: var(--text-lg);
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+  }
+
+  .site-header__actions {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2xs);
+  }
+
+  @media (width < 40rem) {
+    .brand__name {
+      font-size: var(--text-base);
+    }
+  }
+</style>

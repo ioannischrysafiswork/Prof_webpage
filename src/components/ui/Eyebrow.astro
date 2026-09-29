@@ -1,0 +1,44 @@
+---
+/**
+ * Small monospaced label above headings ("EXPERIENCE", "01 · THESIS").
+ * Coloured with the section tint (page default, or `tint`). AA in both themes.
+ */
+import type { Tint } from '@/lib/site';
+
+interface Props {
+  as?: 'p' | 'span' | 'div';
+  /** Override the page's tint. */
+  tint?: Tint;
+  /** Show the short leading rule. Default true. */
+  rule?: boolean;
+  class?: string;
+}
+
+const { as: Tag = 'p', tint, rule = true, class: className } = Astro.props;
+---
+
+<Tag class:list={['eyebrow', className]} data-tint={tint}>
+  {rule && <span class="eyebrow__rule" aria-hidden="true" />}
+  <slot />
+</Tag>
+
+<style>
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    line-height: var(--text-xs--line-height);
+    font-weight: 500;
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
+    color: var(--tint);
+  }
+
+  .eyebrow__rule {
+    display: inline-block;
+    width: var(--space-md);
+    border-top: var(--rule-width) solid currentColor; /* border, not background: prints */
+  }
+</style>

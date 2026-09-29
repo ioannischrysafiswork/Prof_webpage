@@ -1,0 +1,60 @@
+---
+/**
+ * Subtle fade-up when the element scrolls into view (IntersectionObserver).
+ * Content is always visible without JS, under prefers-reduced-motion, and in print.
+ * Do NOT wrap above-the-fold content (the page intro / LCP element).
+ *
+ *   {items.map((item, i) => <Reveal stagger={i}>…</Reveal>)}
+ */
+interface Props {
+  as?: 'div' | 'li' | 'section' | 'article';
+  /** Position in a group: delays the reveal by stagger × --reveal-stagger (max 6 steps). */
+  stagger?: number;
+  class?: string;
+}
+
+const { as: Tag = 'div', stagger = 0, class: className } = Astro.props;
+const step = Math.max(0, Math.min(6, Math.round(stagger)));
+---
+
+<Tag class={className} data-reveal style={step ? `--reveal-step: ${step}` : undefined}>
+  <slot />
+</Tag>
+
+<script>
+  let observer: IntersectionObserver | undefined;
+
+  function reveal(element: Element): void {
+    element.setAttribute('data-revealed', '');
+  }
+
+  function init(): void {
+    observer?.disconnect();
+    const items = document.querySelectorAll('[data-reveal]:not([data-revealed])');
+    if (items.length === 0) return;
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce || !('IntersectionObserver' in window)) {
+      items.forEach(reveal);
+      return;
+    }
+    observer = new IntersectionObserver(
+      (entries, obs) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          reveal(entry.target);
+          obs.unobserve(entry.target);
+        }
+      },
+      { rootMargin: '0px 0px -5% 0px' },
+    );
+    items.forEach((item) => observer?.observe(item));
+  }
+
+  // Run now (the first astro:page-load may fire before this module is evaluated) and
+  // after every client-side navigation.
+  init();
+  document.addEventListener('astro:page-load', init);
+  window.addEventListener('beforeprint', () => {
+    document.querySelectorAll('[data-reveal]').forEach(reveal);
+  });
+</script>

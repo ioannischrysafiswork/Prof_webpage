@@ -1,0 +1,37 @@
+---
+/**
+ * <button> with the shared button styles. For navigation use <LinkButton> instead.
+ * Extra attributes (aria-*, data-*, disabled, form …) are passed through.
+ */
+import type { HTMLAttributes } from 'astro/types';
+import { Icon } from 'astro-icon/components';
+
+interface Props extends Omit<HTMLAttributes<'button'>, 'class'> {
+  variant?: 'primary' | 'secondary' | 'quiet';
+  size?: 'sm' | 'md';
+  /** Iconify name, e.g. "lucide:download". */
+  icon?: string;
+  iconPosition?: 'start' | 'end';
+  class?: string;
+}
+
+const {
+  variant = 'secondary',
+  size = 'md',
+  icon,
+  iconPosition = 'end',
+  type = 'button',
+  class: className,
+  ...attrs
+} = Astro.props;
+---
+
+<button type={type} class:list={['btn', `btn--${variant}`, `btn--${size}`, className]} {...attrs}>
+  {icon && iconPosition === 'start' && (
+    <Icon name={icon} class="btn__icon btn__icon--start" aria-hidden="true" />
+  )}
+  <slot />
+  {icon && iconPosition === 'end' && (
+    <Icon name={icon} class="btn__icon btn__icon--end" aria-hidden="true" />
+  )}
+</button>

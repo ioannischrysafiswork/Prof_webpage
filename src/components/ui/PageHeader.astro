@@ -1,0 +1,142 @@
+---
+/**
+ * Page intro — the first section of every page (the page's only <h1>).
+ * Renders <section id="about" aria-labelledby="about-title"> by default, so the stable
+ * `#about` anchor is kept. A faint graph-paper grid sits behind it (decorative).
+ *
+ *   <PageHeader eyebrow="Work Experience" title={profile.name} lede={profile.headline}>
+ *     <p>{profile.intro.work}</p>
+ *     <Fragment slot="actions"><LinkButton …/></Fragment>
+ *   </PageHeader>
+ *
+ * Slots: default (intro text, max ~70ch), "actions" (buttons), "aside" (e.g. portrait or
+ * hero visual; placed right of the text from 64rem).
+ */
+import type { Tint } from '@/lib/site';
+import Eyebrow from './Eyebrow.astro';
+
+interface Props {
+  title: string;
+  /** Section id (stable anchor). Default "about"; the h1 gets `${id}-title`. */
+  id?: string;
+  eyebrow?: string;
+  /** One-line lede under the title (e.g. headline). */
+  lede?: string;
+  tint?: Tint;
+  /** Graph-paper motif behind the header. Default true. */
+  grid?: boolean;
+  class?: string;
+}
+
+const { title, id = 'about', eyebrow, lede, tint, grid = true, class: className } = Astro.props;
+const hasAside = Astro.slots.has('aside');
+---
+
+<section
+  id={id}
+  aria-labelledby={`${id}-title`}
+  data-tint={tint}
+  class:list={['page-header', { 'page-header--aside': hasAside }, className]}
+>
+  {grid && <div class="page-header__grid bg-grid" aria-hidden="true" data-decorative />}
+  <div class="page-header__inner container-page">
+    <div class="page-header__main">
+      {eyebrow && <Eyebrow>{eyebrow}</Eyebrow>}
+      <h1 id={`${id}-title`} class="page-header__title">
+        {title}
+      </h1>
+      {lede && <p class="page-header__lede">{lede}</p>}
+      {Astro.slots.has('default') && (
+        <div class="page-header__body">
+          <slot />
+        </div>
+      )}
+      {Astro.slots.has('actions') && (
+        <div class="page-header__actions">
+          <slot name="actions" />
+        </div>
+      )}
+    </div>
+    {hasAside && (
+      <div class="page-header__aside">
+        <slot name="aside" />
+      </div>
+    )}
+  </div>
+</section>
+
+<style>
+  .page-header {
+    position: relative;
+    isolation: isolate;
+    padding-block: var(--space-3xl) var(--spacing-section);
+  }
+
+  .page-header__grid {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    opacity: 0.7;
+    mask-image: radial-gradient(ellipse 80% 90% at 15% 0%, black 30%, transparent 75%);
+    pointer-events: none;
+  }
+
+  .page-header__inner {
+    display: grid;
+    gap: var(--space-xl);
+  }
+
+  @media (width >= 64rem) {
+    .page-header--aside .page-header__inner {
+      grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+      align-items: center;
+    }
+  }
+
+  .page-header__main {
+    display: grid;
+    gap: var(--space-md);
+    justify-items: start;
+  }
+
+  .page-header__title {
+    max-width: var(--container-title);
+  }
+
+  .page-header__lede {
+    max-width: var(--container-measure);
+    font-family: var(--font-serif);
+    font-size: var(--text-xl);
+    line-height: var(--text-xl--line-height);
+    color: var(--color-muted);
+  }
+
+  .page-header__body {
+    display: grid;
+    gap: var(--spacing-stack);
+    max-width: var(--container-measure);
+    font-size: var(--text-lg);
+    line-height: var(--leading-body);
+  }
+
+  .page-header__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+    margin-top: var(--space-xs);
+  }
+
+  @media print {
+    .page-header {
+      padding-block: 0 var(--print-gap);
+    }
+
+    .page-header__grid {
+      display: none;
+    }
+
+    .page-header__body {
+      font-size: inherit;
+    }
+  }
+</style>

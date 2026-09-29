@@ -1,0 +1,388 @@
+---
+/**
+ * One entry of a <Timeline>: dates (mono) + node on the rail + title, organisation,
+ * meta, summary, and optional highlights / tech / links (collapsible <details> by default).
+ *
+ * Layout: < 48rem the rail runs down the left edge and dates sit above the title;
+ * ≥ 48rem dates move to a right-aligned column left of the rail.
+ * DOM order is heading-first (dates are placed visually), so heading navigation and
+ * screen readers get "title, organisation, …, dates". Ongoing entries (end: present) get
+ * a filled node. Print: details are expanded and items never split across pages.
+ *
+ * All text comes from content collections; hrefs in `links` must be final (url()).
+ * Default slot: extra detail content (e.g. rendered Markdown body), shown with the details.
+ */
+import { Icon } from 'astro-icon/components';
+import ChipList from '@/components/ui/ChipList.astro';
+import { formatDate, formatDuration, isTodo, parseDate, toDateTimeAttr } from '@/lib/dates';
+import { absoluteHref } from '@/lib/url';
+
+export interface TimelineLink {
+  label: string;
+  href: string;
+}
+
+interface Props {
+  /** Stable anchor id for deep links (e.g. "master-degree"). */
+  id?: string;
+  /** Role / degree. */
+  title: string;
+  headingLevel?: 2 | 3 | 4;
+  /** Organisation / institution. */
+  subtitle?: string;
+  /** Extra facts after the subtitle, e.g. [location, employmentType]. Empty values are skipped. */
+  meta?: readonly (string | null | undefined)[];
+  /** ISO `YYYY-MM` / `YYYY`, or a TODO placeholder. */
+  start?: string | null;
+  /** ISO, `present`, or a TODO placeholder. */
+  end?: string | null;
+  /** Show the duration ("1 yr 3 mos") next to the dates. */
+  showDuration?: boolean;
+  summary?: string;
+  highlights?: readonly string[];
+  tech?: readonly string[];
+  /** Accessible label of the tech list. */
+  techLabel?: string;
+  links?: readonly TimelineLink[];
+  /** Put highlights / tech / links / slot in a collapsible <details>. Default true. */
+  collapsible?: boolean;
+  /** Start expanded. Default false. */
+  open?: boolean;
+  /** Text of the <details> toggle. */
+  detailsLabel?: string;
+  /** Force the "ongoing" node style; default: end === "present". */
+  current?: boolean;
+}
+
+const {
+  id,
+  title,
+  headingLevel = 3,
+  subtitle,
+  meta = [],
+  start,
+  end,
+  showDuration = false,
+  summary,
+  highlights = [],
+  tech = [],
+  techLabel = 'Tools and technologies',
+  links = [],
+  collapsible = true,
+  open = false,
+  detailsLabel = 'Highlights & tools',
+  current = parseDate(end).kind === 'present',
+} = Astro.props;
+
+const Heading = `h${headingLevel}` as 'h2' | 'h3' | 'h4';
+const metaItems = meta.filter(
+  (item): item is string => typeof item === 'string' && item.trim() !== '',
+);
+
+const startLabel = start ? formatDate(start) : '';
+const endLabel = end ? formatDate(end) : '';
+const showEnd = endLabel !== '' && endLabel !== startLabel;
+const startAttr = toDateTimeAttr(start);
+const endAttr = toDateTimeAttr(end);
+const duration =
+  showDuration && start && !isTodo(start) && !isTodo(end)
+    ? formatDuration(start, end ?? undefined)
+    : '';
+
+const hasDetails =
+  highlights.length > 0 || tech.length > 0 || links.length > 0 || Astro.slots.has('default');
+const Details = collapsible ? 'details' : 'div';
+const printUrl = (href: string) => (/^https?:/i.test(href) ? undefined : absoluteHref(href));
+---
+
+<li id={id} class="tl-item" data-current={current ? '' : undefined}>
+  <span class="tl-node" aria-hidden="true"></span>
+
+  <div class="tl-body">
+    <Heading class="tl-title">{title}</Heading>
+    {(subtitle || metaItems.length > 0) && (
+      <p class="tl-sub">
+        {subtitle && <span class="tl-org">{subtitle}</span>}
+        {metaItems.map((item) => (
+          <span class="tl-meta">{item}</span>
+        ))}
+      </p>
+    )}
+    {summary && <p class="tl-summary">{summary}</p>}
+
+    {hasDetails && (
+      <Details class="tl-details" open={collapsible && open ? true : undefined}>
+        {collapsible && (
+          <summary class="tl-toggle">
+            <span>{detailsLabel}</span>
+            <span class="sr-only">: {title}</span>
+            <Icon name="lucide:chevron-down" class="tl-toggle__icon" aria-hidden="true" />
+          </summary>
+        )}
+        <div class="tl-details__body">
+          {highlights.length > 0 && (
+            <ul class="tl-highlights">
+              {highlights.map((item) => (
+                <li>{item}</li>
+              ))}
+            </ul>
+          )}
+          <slot />
+          <ChipList items={tech} label={techLabel} size="sm" />
+          {links.length > 0 && (
+            <ul class="tl-links">
+              {links.map((link) => (
+                <li>
+                  <a href={link.href} class="link" data-print-url={printUrl(link.href)}>
+                    {link.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </Details>
+    )}
+  </div>
+
+  {(startLabel || endLabel) && (
+    <p class="tl-when">
+      <span class="tl-dates">
+        {startLabel &&
+          (startAttr ? <time datetime={startAttr}>{startLabel}</time> : <span>{startLabel}</span>)}
+        {startLabel && showEnd && <span class="tl-dash"> – </span>}
+        {showEnd &&
+          (endAttr ? <time datetime={endAttr}>{endLabel}</time> : <span>{endLabel}</span>)}
+      </span>
+      {duration && <span class="tl-duration">{duration}</span>}
+    </p>
+  )}
+</li>
+
+<style>
+  /* ---------------------------------------------------------------- Frame */
+  .tl-item {
+    --tl-line-x: calc(var(--tl-node) / 2);
+    --tl-node-y: calc(var(--text-xs) * var(--text-xs--line-height) / 2 - var(--tl-node) / 2);
+
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      'when'
+      'body';
+    row-gap: var(--space-2xs);
+    padding-left: var(--tl-rail-compact);
+    padding-bottom: var(--space-xl);
+  }
+
+  /* The rail: a hairline through every item, from the first node, fading after the last. */
+  .tl-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: calc(var(--tl-line-x) - var(--rule-width) / 2);
+    border-left: var(--rule-width) solid var(--color-border-strong); /* borders print */
+  }
+
+  .tl-item:first-child::before {
+    top: calc(var(--tl-node-y) + var(--tl-node) / 2);
+  }
+
+  .tl-item:last-child::before {
+    mask-image: linear-gradient(to bottom, black, transparent);
+  }
+
+  .tl-item:last-child {
+    padding-bottom: var(--space-md);
+  }
+
+  .tl-node {
+    position: absolute;
+    top: var(--tl-node-y);
+    left: calc(var(--tl-line-x) - var(--tl-node) / 2);
+    width: var(--tl-node);
+    height: var(--tl-node);
+    border: var(--rule-width-strong) solid var(--tint);
+    border-radius: var(--radius-full);
+    background-color: var(--color-background);
+  }
+
+  .tl-item[data-current] .tl-node {
+    background-color: var(--tint);
+    box-shadow: 0 0 0 calc(var(--tl-node) / 3) color-mix(in oklab, var(--tint) 20%, transparent);
+  }
+
+  /* ---------------------------------------------------------------- Dates */
+  .tl-when {
+    grid-area: when;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0 var(--space-xs);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    line-height: var(--text-xs--line-height);
+    color: var(--color-muted);
+  }
+
+  .tl-dates {
+    color: var(--color-foreground);
+  }
+
+  .tl-duration::before {
+    content: '·';
+    margin-right: var(--space-xs);
+  }
+
+  /* ----------------------------------------------------------------- Body */
+  .tl-body {
+    grid-area: body;
+    display: grid;
+    justify-items: start;
+    gap: var(--space-xs);
+    min-width: 0;
+    max-width: var(--container-measure);
+  }
+
+  .tl-title {
+    font-size: var(--text-xl);
+    line-height: var(--text-xl--line-height);
+  }
+
+  .tl-sub {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 var(--space-xs);
+    font-size: var(--text-sm);
+    color: var(--color-muted);
+  }
+
+  .tl-org {
+    font-weight: 500;
+    color: var(--color-foreground);
+  }
+
+  .tl-meta::before {
+    content: '·';
+    margin-right: var(--space-xs);
+    color: var(--color-muted);
+  }
+
+  .tl-sub > .tl-meta:first-child::before {
+    content: none;
+  }
+
+  /* -------------------------------------------------------------- Details */
+  .tl-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2xs);
+    min-height: var(--size-mark);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
+    color: var(--color-muted);
+    cursor: pointer;
+    list-style: none;
+    transition: color var(--duration-fast) var(--ease-standard);
+  }
+
+  .tl-toggle::-webkit-details-marker {
+    display: none;
+  }
+
+  .tl-toggle:hover {
+    color: var(--color-foreground);
+  }
+
+  .tl-toggle__icon {
+    width: var(--size-icon-sm);
+    height: var(--size-icon-sm);
+    transition: rotate var(--duration-base) var(--ease-emphasized);
+  }
+
+  .tl-details[open] .tl-toggle__icon {
+    rotate: 180deg;
+  }
+
+  .tl-details__body {
+    display: grid;
+    gap: var(--space-sm);
+    padding-top: var(--space-xs);
+  }
+
+  .tl-highlights {
+    display: grid;
+    gap: var(--space-2xs);
+  }
+
+  .tl-highlights > li {
+    position: relative;
+    padding-left: var(--space-md);
+  }
+
+  .tl-highlights > li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: calc(1lh / 2);
+    width: var(--space-xs);
+    border-top: var(--rule-width) solid var(--tint);
+  }
+
+  .tl-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2xs) var(--space-md);
+    font-size: var(--text-sm);
+  }
+
+  /* ------------------------------------------------ Two columns (≥ 48rem) */
+  @media (width >= 48rem) {
+    .tl-item {
+      --tl-line-x: calc(var(--tl-date-col) + var(--tl-rail) / 2);
+      --tl-node-y: calc(var(--text-xl) * var(--text-xl--line-height) / 2 - var(--tl-node) / 2);
+
+      grid-template-columns: var(--tl-date-col) minmax(0, 1fr);
+      grid-template-areas: 'when body';
+      column-gap: var(--tl-rail);
+      padding-left: 0;
+    }
+
+    .tl-when {
+      flex-direction: column;
+      align-items: flex-end;
+      /* Centre the first date line on the title's first line. */
+      padding-top: calc(
+        (
+            var(--text-xl) * var(--text-xl--line-height) - var(--text-xs) *
+              var(--text-xs--line-height)
+          ) /
+          2
+      );
+      text-align: right;
+    }
+
+    .tl-duration::before {
+      content: none;
+    }
+  }
+
+  /* ------------------------------------------------------------------ Print */
+  @media print {
+    .tl-item {
+      padding-bottom: var(--print-gap);
+    }
+
+    .tl-item[data-current] .tl-node {
+      box-shadow: none;
+    }
+
+    .tl-details__body {
+      padding-top: 0;
+    }
+  }
+</style>

@@ -1,0 +1,77 @@
+---
+/**
+ * Compact label for a technology, method or tag. Not a rating — never add levels.
+ * Variants: "default" (neutral well), "tint" (section tint), "outline" (hairline only).
+ */
+import type { Tint } from '@/lib/site';
+
+interface Props {
+  as?: 'span' | 'li';
+  variant?: 'default' | 'tint' | 'outline';
+  size?: 'sm' | 'md';
+  tint?: Tint;
+  /** Optional tooltip / extra context (also exposed to assistive tech via title). */
+  title?: string;
+  class?: string;
+}
+
+const {
+  as: Tag = 'span',
+  variant = 'default',
+  size = 'md',
+  tint,
+  title,
+  class: className,
+} = Astro.props;
+---
+
+<Tag
+  class:list={['chip', `chip--${variant}`, `chip--${size}`, className]}
+  data-tint={tint}
+  title={title}
+>
+  <slot />
+</Tag>
+
+<style>
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2xs);
+    border: var(--rule-width) solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background-color: var(--color-sunken);
+    color: var(--color-foreground);
+    font-size: var(--text-sm);
+    line-height: var(--text-sm--line-height);
+    white-space: nowrap;
+  }
+
+  .chip--md {
+    padding: var(--space-2xs) var(--space-xs);
+  }
+
+  .chip--sm {
+    padding: 0 var(--space-xs);
+    font-size: var(--text-xs);
+    line-height: var(--text-xs--line-height);
+  }
+
+  .chip--tint {
+    border-color: color-mix(in oklab, var(--tint) 35%, transparent);
+    background-color: color-mix(in oklab, var(--tint) 8%, var(--color-surface));
+    color: var(--tint);
+  }
+
+  .chip--outline {
+    background-color: transparent;
+    border-color: var(--color-border-strong);
+  }
+
+  @media print {
+    .chip {
+      border-color: var(--color-border-strong);
+      background: none;
+    }
+  }
+</style>

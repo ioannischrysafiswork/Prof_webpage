@@ -1,7 +1,25 @@
 ---
-/** First focusable element on every page (WCAG 2.4.1). Styled by design-system. */
+/** First focusable element on every page (WCAG 2.4.1). Visible only when focused. */
 ---
 
-<a href="#main" class="sr-only-focusable">
+<a href="#main" class="skip-link sr-only-focusable">
   Skip to content
 </a>
+
+<style>
+  .skip-link:focus,
+  .skip-link:focus-within {
+    position: fixed;
+    top: var(--space-xs);
+    left: var(--space-xs);
+    z-index: var(--z-skip-link);
+    padding: var(--space-xs) var(--space-md);
+    border-radius: var(--radius-sm);
+    background-color: var(--color-foreground);
+    color: var(--color-background);
+    font-size: var(--text-sm);
+    font-weight: 500;
+    text-decoration: none;
+    box-shadow: var(--shadow-md);
+  }
+</style>

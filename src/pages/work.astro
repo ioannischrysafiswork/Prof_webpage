@@ -1,52 +1,48 @@
 ---
 /**
  * Work Experience — `/work` (CLAUDE.md §2.2). Permanent route, printed in CVs.
- * Placeholder skeleton: work-page-builder fills in each section.
+ * Skeleton wired to the design system: work-page-builder fills in each section.
  * Stable anchors: #about, #experience, #certifications, #projects, #skills.
  */
 import { getCollection } from 'astro:content';
 import BaseLayout from '@/layouts/BaseLayout.astro';
+import PageHeader from '@/components/ui/PageHeader.astro';
+import Section from '@/components/ui/Section.astro';
+import Timeline from '@/components/timeline/Timeline.astro';
+import TimelineItem from '@/components/timeline/TimelineItem.astro';
 import { getProfile } from '@/lib/profile';
-import { formatRange, sortByDateDesc, toDateTimeAttr } from '@/lib/dates';
+import { sortByDateDesc } from '@/lib/dates';
 
 const profile = await getProfile();
 const experience = sortByDateDesc(await getCollection('experience'), (entry) => entry.data);
 ---
 
 <BaseLayout page="work" path="/work">
-  <section id="about" aria-labelledby="about-title">
-    <h1 id="about-title">Work Experience</h1>
-    <p>
-      {profile.name} · {profile.headline}
-    </p>
+  <PageHeader id="about" eyebrow={profile.name} title="Work Experience" lede={profile.headline}>
     <p>{profile.intro.work}</p>
-  </section>
+  </PageHeader>
 
-  <section id="experience" aria-labelledby="experience-title">
-    <h2 id="experience-title">Experience</h2>
-    <ol>
+  <Section id="experience" eyebrow="Career" title="Experience">
+    <Timeline label="Work experience, most recent first">
       {experience.map(({ data }) => (
-        <li>
-          <h3>
-            {data.role} · {data.organisation}
-          </h3>
-          <p>
-            <time datetime={toDateTimeAttr(data.start)}>{formatRange(data.start, data.end)}</time>
-          </p>
-        </li>
+        <TimelineItem
+          title={data.role}
+          subtitle={data.organisation}
+          meta={[data.location, data.employmentType]}
+          start={data.start}
+          end={data.end}
+          showDuration
+          summary={data.summary}
+          highlights={data.highlights}
+          tech={data.tech}
+        />
       ))}
-    </ol>
-  </section>
+    </Timeline>
+  </Section>
 
-  <section id="certifications" aria-labelledby="certifications-title">
-    <h2 id="certifications-title">Certifications</h2>
-  </section>
+  <Section id="certifications" eyebrow="Credentials" title="Certifications" />
 
-  <section id="projects" aria-labelledby="projects-title">
-    <h2 id="projects-title">Selected projects</h2>
-  </section>
+  <Section id="projects" eyebrow="GitHub" title="Selected projects" />
 
-  <section id="skills" aria-labelledby="skills-title">
-    <h2 id="skills-title">Skills</h2>
-  </section>
+  <Section id="skills" eyebrow="Toolbox" title="Skills" />
 </BaseLayout>

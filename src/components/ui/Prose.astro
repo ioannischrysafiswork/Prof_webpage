@@ -1,0 +1,18 @@
+---
+/**
+ * Wrapper for rendered Markdown/MDX (thesis abstracts, project write-ups):
+ *   <Prose><Content /></Prose>
+ * Typography, lists, code (Shiki), tables, figures and KaTeX are styled in global.css
+ * (.prose). Max width ~70ch.
+ */
+interface Props {
+  as?: 'div' | 'article' | 'section';
+  class?: string;
+}
+
+const { as: Tag = 'div', class: className } = Astro.props;
+---
+
+<Tag class:list={['prose', className]}>
+  <slot />
+</Tag>

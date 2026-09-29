@@ -1,0 +1,273 @@
+---
+/**
+ * Content card for projects, certifications, academic work and Home entry points.
+ *
+ * With `href` + `title`, the title becomes a link stretched over the whole card (one tab
+ * stop, whole card clickable). Other links inside the card (slot "footer") stay clickable
+ * on top of it. `href` must already be final (`url()` for internal paths).
+ *
+ * Slots: "media" (top image/figure, full-bleed), default (body text), "footer" (chips,
+ * links; pinned to the bottom so cards in a grid align).
+ * Variants: "default" (surface + hairline), "feature" (larger, tinted top rule — e.g. the
+ * Home entry cards), "plain" (no surface; for dense lists).
+ */
+import { Icon } from 'astro-icon/components';
+import type { Tint } from '@/lib/site';
+import { absoluteHref } from '@/lib/url';
+import Eyebrow from './Eyebrow.astro';
+
+interface Props {
+  as?: 'article' | 'div' | 'li' | 'section';
+  title?: string;
+  headingLevel?: 2 | 3 | 4;
+  /** Makes the whole card a link (requires `title`). */
+  href?: string;
+  /** Override external-link detection for `href`. */
+  external?: boolean;
+  eyebrow?: string;
+  /** Meta line under the title (e.g. issuer · date), rendered in mono. */
+  meta?: string;
+  variant?: 'default' | 'feature' | 'plain';
+  tint?: Tint;
+  id?: string;
+  class?: string;
+}
+
+const {
+  as: Tag = 'article',
+  title,
+  headingLevel = 3,
+  href,
+  external = href ? /^https?:\/\//i.test(href) : false,
+  eyebrow,
+  meta,
+  variant = 'default',
+  tint,
+  id,
+  class: className,
+} = Astro.props;
+
+const Heading = `h${headingLevel}` as 'h2' | 'h3' | 'h4';
+const linked = Boolean(href && title);
+const printHref = href && !external ? absoluteHref(href) : undefined;
+---
+
+<Tag
+  id={id}
+  data-tint={tint}
+  class:list={['card', `card--${variant}`, { 'card--linked': linked }, className]}
+>
+  {Astro.slots.has('media') && (
+    <div class="card__media">
+      <slot name="media" />
+    </div>
+  )}
+  <div class="card__content">
+    {eyebrow && <Eyebrow rule={false}>{eyebrow}</Eyebrow>}
+    {title && (
+      <Heading class="card__title">
+        {linked ? (
+          <a href={href} class="card__link" data-print-url={printHref}>
+            <span>{title}</span>
+            <Icon
+              name={external ? 'lucide:arrow-up-right' : 'lucide:arrow-right'}
+              class="card__arrow"
+              aria-hidden="true"
+            />
+          </a>
+        ) : (
+          title
+        )}
+      </Heading>
+    )}
+    {meta && <p class="card__meta">{meta}</p>}
+    {Astro.slots.has('default') && (
+      <div class="card__body">
+        <slot />
+      </div>
+    )}
+    {Astro.slots.has('footer') && (
+      <div class="card__footer">
+        <slot name="footer" />
+      </div>
+    )}
+  </div>
+</Tag>
+
+<style>
+  .card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    border: var(--rule-width) solid var(--color-border);
+    border-radius: var(--radius-md);
+    background-color: var(--color-surface);
+    transition:
+      border-color var(--duration-fast) var(--ease-standard),
+      box-shadow var(--duration-base) var(--ease-standard),
+      translate var(--duration-base) var(--ease-emphasized);
+  }
+
+  .card--plain {
+    border-color: transparent;
+    background-color: transparent;
+  }
+
+  /* Feature cards: a short tinted rule on the top edge (a notebook tab, not a banner). */
+  .card--feature::after {
+    content: '';
+    position: absolute;
+    top: calc(var(--rule-width) * -1);
+    left: var(--space-lg);
+    width: var(--space-xl);
+    height: var(--rule-width-strong);
+    background-color: var(--tint);
+    transition: width var(--duration-base) var(--ease-emphasized);
+  }
+
+  .card--feature.card--linked:hover::after {
+    width: calc(var(--space-xl) * 2);
+  }
+
+  .card__media {
+    overflow: hidden;
+    border-bottom: var(--rule-width) solid var(--color-border);
+    border-radius: calc(var(--radius-md) - var(--rule-width))
+      calc(var(--radius-md) - var(--rule-width)) 0 0;
+    background-color: var(--color-sunken);
+  }
+
+  .card__media :global(img),
+  .card__media :global(svg) {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  .card__content {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: var(--space-sm);
+    padding: var(--space-lg);
+  }
+
+  .card--plain .card__content {
+    padding: 0;
+  }
+
+  .card--feature .card__content {
+    gap: var(--space-md);
+    padding: var(--space-xl) var(--space-lg);
+  }
+
+  .card__title {
+    font-size: var(--text-xl);
+    line-height: var(--text-xl--line-height);
+  }
+
+  .card--feature .card__title {
+    font-size: var(--text-2xl);
+    line-height: var(--text-2xl--line-height);
+  }
+
+  .card__link {
+    display: inline;
+    color: inherit;
+    text-decoration: none;
+  }
+
+  /* Stretched link: the whole card is the hit area. */
+  .card__link::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    border-radius: inherit;
+  }
+
+  .card__link:focus-visible {
+    outline: none;
+  }
+
+  .card:has(.card__link:focus-visible) {
+    outline: var(--focus-ring-width) solid var(--color-accent);
+    outline-offset: var(--focus-ring-offset);
+  }
+
+  .card__arrow {
+    display: inline-block;
+    width: var(--size-icon);
+    height: var(--size-icon);
+    margin-left: var(--space-2xs);
+    vertical-align: -0.1em;
+    color: var(--color-muted);
+    transition:
+      translate var(--duration-base) var(--ease-emphasized),
+      color var(--duration-fast) var(--ease-standard);
+  }
+
+  .card__meta {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    line-height: var(--text-xs--line-height);
+    color: var(--color-muted);
+  }
+
+  .card__body {
+    color: var(--color-muted);
+  }
+
+  .card__body :global(p + p) {
+    margin-top: var(--space-xs);
+  }
+
+  .card__footer {
+    position: relative;
+    z-index: 1; /* keep footer links clickable above the stretched link */
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-xs) var(--space-md);
+    margin-top: auto;
+    padding-top: var(--space-sm);
+  }
+
+  /* Hover only for linked cards; subtle lift, no heavy shadow. */
+  .card--linked:hover {
+    border-color: var(--color-border-strong);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .card--linked:hover .card__arrow {
+    color: var(--tint);
+    translate: var(--space-2xs) 0;
+  }
+
+  .card--plain.card--linked:hover {
+    box-shadow: none;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .card--linked:hover {
+      translate: 0 calc(var(--rule-width) * -2);
+    }
+  }
+
+  @media print {
+    .card {
+      border-color: var(--color-border-strong);
+      border-radius: 0;
+    }
+
+    .card__content {
+      padding: var(--print-gap);
+    }
+
+    .card__arrow,
+    .card--feature::after {
+      display: none;
+    }
+  }
+</style>

@@ -1,33 +1,659 @@
 /*
  * Global styles & design tokens — the ONLY place tokens are defined (CLAUDE.md §4).
+ * Concept: "physicist-engineer's notebook" — warm paper, graphite ink, one ink-blue
+ * accent, and three small section tints used only for orientation details.
  *
- * Scaffold only: the design-system agent owns this file and will define the full
- * palette (light/dark), type scale, spacing, radii, shadows, motion and print styles.
+ * Contents
+ *   1. Imports (Tailwind, self-hosted fonts)
+ *   2. Theme tokens (@theme static): colour, type, spacing, radii, shadows, motion
+ *   3. Context tokens (@theme inline): section tint that follows the page / [data-tint]
+ *   4. Base layer: document, typography, links, focus, selection
+ *   5. Components layer: containers, prose (Markdown), Shiki code, reveal-on-scroll
+ *   6. Utilities: sr-only-focusable, container-page, bg-grid, link
+ *   7. Print stylesheet (/work and /academic print as clean CVs)
+ *
+ * Colour values use `light-dark(<light>, <dark>)`. The active scheme comes from
+ * `color-scheme`: the OS preference by default, or `html[data-theme]` set by the no-flash
+ * script in BaseLayout / the theme toggle. Every text pair is WCAG AA — see README.md.
+ * Documentation for page builders: src/styles/README.md.
  */
 @import 'tailwindcss';
 
-/* Self-hosted variable fonts (Fontsource) — no third-party requests. */
-@import '@fontsource-variable/newsreader';
+/* Self-hosted variable fonts (Fontsource) — no third-party requests. Browsers only
+   download a file when a glyph in its unicode-range is actually rendered.
+   Newsreader upright includes the optical-size axis (refined display cuts for headings);
+   italic uses the lighter weight-only file (rarely used: quotes, emphasis). */
+@import '@fontsource-variable/newsreader/opsz.css';
+@import '@fontsource-variable/newsreader/wght-italic.css';
 @import '@fontsource-variable/inter';
 @import '@fontsource-variable/jetbrains-mono';
 
-@theme {
-  --font-serif: 'Newsreader Variable', ui-serif, Georgia, serif;
-  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono Variable', ui-monospace, 'SFMono-Regular', monospace;
+/* `dark:` variant follows the resolved theme attribute (always set when JS runs).
+   Prefer semantic tokens (which switch automatically) over `dark:` overrides. */
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
+/* Metric-matched fallback for Inter: minimises layout shift while the webfont loads. */
+@font-face {
+  font-family: 'Inter Fallback';
+  src: local('Arial');
+  ascent-override: 90.44%;
+  descent-override: 22.52%;
+  line-gap-override: 0%;
+  size-adjust: 107.12%;
 }
 
+/* ============================================================== 2. Theme tokens */
+
+@theme static {
+  /* ---------------------------------------------------------------- Typography */
+  --font-serif: 'Newsreader Variable', ui-serif, Georgia, 'Times New Roman', serif;
+  --font-sans: 'Inter Variable', 'Inter Fallback', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+
+  /* Fluid modular scale, 360px → 1440px viewport: ratio 1.2 → 1.25, base 16px → 17px. */
+  --text-*: initial;
+  --text-xs: clamp(0.75rem, 0.7292rem + 0.0926vw, 0.8125rem); /* 12 → 13px, labels */
+  --text-xs--line-height: 1.5;
+  --text-sm: clamp(0.875rem, 0.8542rem + 0.0926vw, 0.9375rem); /* 14 → 15px, meta */
+  --text-sm--line-height: 1.55;
+  --text-base: clamp(1rem, 0.9792rem + 0.0926vw, 1.0625rem); /* 16 → 17px, body */
+  --text-base--line-height: 1.6;
+  --text-lg: clamp(1.2rem, 1.1573rem + 0.1898vw, 1.3281rem); /* 19 → 21px, lede */
+  --text-lg--line-height: 1.5;
+  --text-xl: clamp(1.44rem, 1.3666rem + 0.3262vw, 1.6602rem); /* 23 → 27px, h3 */
+  --text-xl--line-height: 1.3;
+  --text-2xl: clamp(1.728rem, 1.6123rem + 0.5144vw, 2.0752rem); /* 28 → 33px */
+  --text-2xl--line-height: 1.2;
+  --text-3xl: clamp(2.0736rem, 1.9001rem + 0.771vw, 2.594rem); /* 33 → 42px, h2 */
+  --text-3xl--line-height: 1.15;
+  --text-4xl: clamp(2.4883rem, 2.2369rem + 1.1173vw, 3.2425rem); /* 40 → 52px */
+  --text-4xl--line-height: 1.1;
+  --text-5xl: clamp(2.986rem, 2.6303rem + 1.5809vw, 4.0531rem); /* 48 → 65px, h1 */
+  --text-5xl--line-height: 1.05;
+
+  --leading-body: 1.6;
+  --leading-display: 1.1;
+  --tracking-display: -0.015em;
+  --tracking-label: 0.08em;
+
+  /* ------------------------------------------------------------------- Colour */
+  --color-*: initial;
+
+  /* Warm-leaning neutral scale (OKLCH hue 75, chroma ≤ 0.011). */
+  --color-neutral-0: #fefcfa;
+  --color-neutral-50: #f9f7f3;
+  --color-neutral-100: #f1efeb;
+  --color-neutral-200: #e5e1dc;
+  --color-neutral-300: #d1cdc7;
+  --color-neutral-400: #a8a49e;
+  --color-neutral-500: #847f79;
+  --color-neutral-600: #64605a;
+  --color-neutral-700: #48443f;
+  --color-neutral-800: #2e2b27;
+  --color-neutral-850: #211f1c;
+  --color-neutral-900: #191714;
+  --color-neutral-925: #13110f;
+  --color-neutral-950: #0d0c0a;
+
+  /* Semantic roles — light-dark(<light>, <dark>). Use these in components. */
+  --color-background: light-dark(var(--color-neutral-50), var(--color-neutral-925)); /* page */
+  --color-surface: light-dark(var(--color-neutral-0), var(--color-neutral-850)); /* cards */
+  --color-sunken: light-dark(var(--color-neutral-100), var(--color-neutral-950)); /* code, wells */
+  --color-foreground: light-dark(var(--color-neutral-900), #ebe7e2); /* body text */
+  --color-muted: light-dark(var(--color-neutral-600), #aba7a1); /* secondary text, AA */
+  --color-faint: light-dark(var(--color-neutral-400), #75716b); /* decorative only, NOT text */
+  --color-border: light-dark(var(--color-neutral-200), var(--color-neutral-800)); /* hairlines */
+  --color-border-strong: light-dark(var(--color-neutral-300), #433f3b); /* rails, outlines */
+
+  /* The one accent: fountain-pen ink blue (links, focus, primary actions). */
+  --color-accent: light-dark(#2d4fb0, #99b1fb);
+  --color-accent-strong: light-dark(#1c3891, #b6c9ff); /* hover / pressed */
+  --color-on-accent: light-dark(var(--color-neutral-0), var(--color-neutral-925));
+
+  /* Section tints — small details only (nav underline, timeline nodes, eyebrows). */
+  --color-tint-home: var(--color-accent);
+  --color-tint-work: light-dark(#00696a, #70cdc7); /* deep teal */
+  --color-tint-academic: light-dark(#965200, #efb46f); /* warm amber */
+
+  --color-shadow: light-dark(rgb(40 30 20 / 0.08), rgb(0 0 0 / 0.4));
+
+  /* ------------------------------------------------------------------ Spacing */
+  /* Tailwind's numeric scale (p-4 = 1rem) stays; these named steps are fluid. */
+  --spacing-gutter: clamp(1.25rem, 0.8333rem + 1.8519vw, 2.5rem); /* page side padding */
+  --spacing-section: clamp(3rem, 2.5rem + 2.2222vw, 4.5rem); /* between sections */
+  --spacing-block: clamp(1.5rem, 1.3333rem + 0.7407vw, 2rem); /* between blocks */
+  --spacing-stack: clamp(1rem, 0.9167rem + 0.3704vw, 1.25rem); /* between paragraphs */
+
+  --space-2xs: 0.25rem;
+  --space-xs: 0.5rem;
+  --space-sm: clamp(0.75rem, 0.7083rem + 0.1852vw, 0.875rem);
+  --space-md: clamp(1rem, 0.9167rem + 0.3704vw, 1.25rem);
+  --space-lg: clamp(1.5rem, 1.3333rem + 0.7407vw, 2rem);
+  --space-xl: clamp(2rem, 1.6667rem + 1.4815vw, 3rem);
+  --space-2xl: clamp(3rem, 2.5rem + 2.2222vw, 4.5rem);
+  --space-3xl: clamp(4rem, 3rem + 4.4444vw, 7rem);
+
+  /* Widths: prose measure ~70ch, page frame for grids. */
+  --container-measure: 70ch; /* prose line length */
+  --container-title: 20ch; /* display headings */
+  --container-page: 76rem; /* page frame */
+
+  --header-height: 4rem;
+  --grid-size: 1.5rem; /* graph-paper motif cell */
+
+  /* Component sizes. */
+  --size-target: 2.75rem; /* min. touch target (44px) for icon buttons & menu rows */
+  --size-icon: 1.125rem;
+  --size-icon-sm: 0.875rem;
+  --size-mark: 2rem; /* monogram in the header */
+  --rule-width: 1px; /* hairlines */
+  --rule-width-strong: 2px; /* active underline, quote bar */
+  --label-col: 11rem; /* left label column: timeline dates, footer section names */
+  --tl-date-col: var(--label-col); /* timeline date column (≥ 48rem) */
+  --tl-rail: 2.5rem; /* timeline rail column (line + node), ≥ 48rem */
+  --tl-rail-compact: 1.75rem; /* timeline rail on small screens */
+  --tl-node: 0.75rem; /* timeline node diameter */
+
+  /* ---------------------------------------------------------- Radii & shadows */
+  --radius-*: initial;
+  --radius-xs: 0.125rem;
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-full: 9999px;
+
+  --shadow-*: initial;
+  --shadow-xs: 0 1px 1px var(--color-shadow);
+  --shadow-sm: 0 1px 2px var(--color-shadow), 0 2px 6px var(--color-shadow);
+  --shadow-md: 0 2px 4px var(--color-shadow), 0 8px 24px var(--color-shadow);
+
+  /* ------------------------------------------------------------------- Motion */
+  --duration-fast: 120ms;
+  --duration-base: 200ms;
+  --duration-slow: 450ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-emphasized: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --reveal-distance: 0.75rem;
+  --reveal-stagger: 70ms; /* delay per <Reveal stagger> step */
+
+  --focus-ring-width: 2px;
+  --focus-ring-offset: 3px;
+
+  --print-gap: 0; /* re-declared in the print stylesheet */
+
+  /* Stacking. */
+  --z-header: 40;
+  --z-skip-link: 50;
+}
+
+/* ========================================================= 3. Context tokens */
+
+/* `--tint` follows the current area (html[data-page]) or a local [data-tint] override.
+   `inline` makes utilities (text-tint, bg-tint, border-tint) read the variable where they
+   are used, so nested overrides work. */
+@theme inline {
+  --color-tint: var(--tint);
+}
+
+:root {
+  --tint: var(--color-tint-home);
+  /* Short aliases requested in the brief. */
+  --tint-home: var(--color-tint-home);
+  --tint-work: var(--color-tint-work);
+  --tint-academic: var(--color-tint-academic);
+
+  /* Series colours for theme-aware SVG figures (scientific-figures skill).
+     All ≥ 3:1 against background, surface and sunken in both themes. */
+  --plot-1: light-dark(#3255b6, #96aef7);
+  --plot-2: light-dark(#be6517, #f3ad66);
+  --plot-3: light-dark(#00847e, #66d0c3);
+  --plot-4: light-dark(#874197, #dc95d5);
+  --plot-5: light-dark(#b33736, #f07f77);
+  --plot-6: light-dark(#5c6b7a, #a0b0c1);
+
+  /* Shiki `css-variables` theme, matched to the palette (≥ 4.5:1 on --color-sunken). */
+  --astro-code-foreground: var(--color-foreground);
+  --astro-code-background: var(--color-sunken);
+  --astro-code-token-comment: var(--color-muted);
+  --astro-code-token-keyword: var(--color-accent);
+  --astro-code-token-string: light-dark(#00696a, #70cdc7);
+  --astro-code-token-string-expression: light-dark(#00696a, #70cdc7);
+  --astro-code-token-constant: light-dark(#965200, #efb46f);
+  --astro-code-token-function: light-dark(#6f3a80, #dc95d5);
+  --astro-code-token-parameter: var(--color-foreground);
+  --astro-code-token-punctuation: var(--color-muted);
+  --astro-code-token-link: var(--color-accent);
+}
+
+[data-page='work'],
+[data-tint='work'] {
+  --tint: var(--color-tint-work);
+}
+
+[data-page='academic'],
+[data-tint='academic'] {
+  --tint: var(--color-tint-academic);
+}
+
+[data-tint='home'],
+[data-tint='accent'] {
+  --tint: var(--color-tint-home);
+}
+
+/* ================================================================== 4. Base */
+
 @layer base {
-  html {
-    font-family: var(--font-sans);
+  :root {
     color-scheme: light dark;
   }
 
-  /* Anchor targets (e.g. /work#skills) should not hide under a sticky header. */
+  :root[data-theme='light'] {
+    color-scheme: light;
+  }
+
+  :root[data-theme='dark'] {
+    color-scheme: dark;
+  }
+
+  html {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    font-size: 100%;
+    line-height: var(--leading-body);
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: clip;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
+  }
+
+  body {
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    font-size: var(--text-base);
+    line-height: var(--leading-body);
+    font-feature-settings:
+      'cv11' 1,
+      'ss01' 1; /* Inter: single-storey a off, open digits */
+  }
+
+  body > main {
+    flex: 1 0 auto;
+  }
+
+  *,
+  ::before,
+  ::after {
+    border-color: var(--color-border);
+  }
+
+  /* Anchor targets (e.g. /work#skills) clear the sticky header. */
   [id] {
-    scroll-margin-top: 5rem;
+    scroll-margin-top: calc(var(--header-height) + var(--space-md));
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-serif);
+    font-weight: 450;
+    color: var(--color-foreground);
+    letter-spacing: var(--tracking-display);
+    line-height: var(--leading-display);
+    text-wrap: balance;
+  }
+
+  h1 {
+    font-size: var(--text-5xl);
+    line-height: var(--text-5xl--line-height);
+  }
+
+  h2 {
+    font-size: var(--text-3xl);
+    line-height: var(--text-3xl--line-height);
+  }
+
+  h3 {
+    font-size: var(--text-xl);
+    line-height: var(--text-xl--line-height);
+    letter-spacing: -0.005em;
+  }
+
+  h4 {
+    font-size: var(--text-lg);
+    line-height: var(--text-lg--line-height);
+    letter-spacing: 0;
+  }
+
+  p,
+  li,
+  dd,
+  figcaption {
+    text-wrap: pretty;
+  }
+
+  a {
+    color: inherit;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.2em;
+  }
+
+  code,
+  kbd,
+  samp,
+  pre {
+    font-family: var(--font-mono);
+    font-size: 0.9em;
+  }
+
+  time {
+    font-variant-numeric: tabular-nums;
+  }
+
+  hr {
+    border: 0;
+    border-top: 1px solid var(--color-border);
+  }
+
+  :focus-visible {
+    outline: var(--focus-ring-width) solid var(--color-accent);
+    outline-offset: var(--focus-ring-offset);
+    border-radius: var(--radius-xs);
+  }
+
+  /* <main tabindex="-1"> receives focus from the skip link; no ring needed there. */
+  main:focus {
+    outline: none;
+  }
+
+  ::selection {
+    background-color: color-mix(in oklab, var(--color-accent) 22%, transparent);
+    color: var(--color-foreground);
+  }
+
+  /* Honour reduced motion globally (Astro's ClientRouter also respects it). */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 }
+
+/* ============================================================ 5. Components */
+
+@layer components {
+  /* ---------------------------------------------------------------- Prose */
+  /* Long-form Markdown/MDX (thesis abstracts, project write-ups). Use <Prose>. */
+  .prose {
+    max-width: var(--container-measure);
+    color: var(--color-foreground);
+    font-size: var(--text-base);
+    line-height: var(--leading-body);
+
+    & > * + * {
+      margin-top: var(--spacing-stack);
+    }
+
+    & :where(h2, h3, h4) {
+      margin-top: var(--space-xl);
+    }
+
+    & :where(h2) {
+      font-size: var(--text-2xl);
+      line-height: var(--text-2xl--line-height);
+    }
+
+    & :where(h3) {
+      font-size: var(--text-xl);
+    }
+
+    & :where(h2, h3, h4) + * {
+      margin-top: var(--space-sm);
+    }
+
+    & :where(a) {
+      color: var(--color-accent);
+      text-decoration-color: color-mix(in oklab, var(--color-accent) 45%, transparent);
+      transition: text-decoration-color var(--duration-fast) var(--ease-standard);
+
+      &:hover {
+        color: var(--color-accent-strong);
+        text-decoration-color: currentColor;
+      }
+    }
+
+    & :where(strong) {
+      font-weight: 600;
+    }
+
+    & :where(ul, ol) {
+      padding-left: 1.4em;
+    }
+
+    & :where(ul) {
+      list-style: none;
+
+      & > li {
+        position: relative;
+
+        &::before {
+          content: '';
+          position: absolute;
+          left: -1.1em;
+          top: calc(0.8em - 1px);
+          width: 0.5em;
+          border-top: var(--rule-width) solid var(--color-muted);
+        }
+      }
+    }
+
+    & :where(ol) {
+      list-style: decimal;
+
+      & > li::marker {
+        font-family: var(--font-mono);
+        font-size: var(--text-sm);
+        color: var(--color-muted);
+      }
+    }
+
+    & :where(li + li) {
+      margin-top: var(--space-xs);
+    }
+
+    & :where(blockquote) {
+      border-left: 2px solid var(--tint);
+      padding-left: var(--space-md);
+      font-family: var(--font-serif);
+      font-size: var(--text-lg);
+      font-style: italic;
+      color: var(--color-foreground);
+    }
+
+    & :where(:not(pre) > code) {
+      padding: 0.1em 0.35em;
+      border-radius: var(--radius-sm);
+      background: var(--color-sunken);
+      border: 1px solid var(--color-border);
+      font-size: 0.85em;
+    }
+
+    & :where(pre) {
+      padding: var(--space-md);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--color-border);
+      overflow-x: auto;
+      font-size: var(--text-sm);
+      line-height: 1.6;
+    }
+
+    & :where(figure) {
+      margin-block: var(--space-lg);
+    }
+
+    & :where(figcaption) {
+      margin-top: var(--space-xs);
+      font-size: var(--text-sm);
+      color: var(--color-muted);
+    }
+
+    & :where(img, svg, video) {
+      max-width: 100%;
+      height: auto;
+    }
+
+    & :where(table) {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: var(--text-sm);
+      font-variant-numeric: tabular-nums;
+    }
+
+    & :where(th, td) {
+      padding: var(--space-xs) var(--space-sm);
+      border-bottom: 1px solid var(--color-border);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    & :where(th) {
+      font-weight: 600;
+      border-bottom-color: var(--color-border-strong);
+    }
+
+    & :where(hr) {
+      margin-block: var(--space-xl);
+    }
+
+    /* KaTeX display maths scrolls instead of overflowing on phones. */
+    & :where(.katex-display) {
+      overflow-x: auto;
+      overflow-y: hidden;
+      padding-block: var(--space-2xs);
+    }
+  }
+
+  /* ------------------------------------------------ Buttons (Button, LinkButton) */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-xs);
+    min-height: var(--size-target);
+    padding-inline: var(--space-md);
+    border: var(--rule-width) solid transparent;
+    border-radius: var(--radius-sm);
+    font-family: var(--font-sans);
+    font-size: var(--text-sm);
+    font-weight: 500;
+    line-height: 1.2;
+    text-decoration: none;
+    white-space: nowrap;
+    cursor: pointer;
+    transition:
+      background-color var(--duration-fast) var(--ease-standard),
+      border-color var(--duration-fast) var(--ease-standard),
+      color var(--duration-fast) var(--ease-standard);
+
+    &:disabled,
+    &[aria-disabled='true'] {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+
+  .btn--sm {
+    min-height: var(--size-mark);
+    padding-inline: var(--space-sm);
+    font-size: var(--text-xs);
+  }
+
+  .btn--primary {
+    background-color: var(--color-accent);
+    color: var(--color-on-accent);
+
+    &:hover {
+      background-color: var(--color-accent-strong);
+    }
+  }
+
+  .btn--secondary {
+    background-color: var(--color-surface);
+    border-color: var(--color-border-strong);
+    color: var(--color-foreground);
+
+    &:hover {
+      border-color: var(--color-foreground);
+    }
+  }
+
+  .btn--quiet {
+    min-height: auto;
+    padding-inline: 0;
+    color: var(--color-accent);
+
+    &:hover {
+      color: var(--color-accent-strong);
+      text-decoration: underline;
+      text-underline-offset: 0.2em;
+    }
+  }
+
+  .btn__icon {
+    flex: none;
+    width: var(--size-icon-sm);
+    height: var(--size-icon-sm);
+    transition: translate var(--duration-base) var(--ease-emphasized);
+  }
+
+  .btn:hover .btn__icon--end {
+    translate: var(--space-2xs) 0;
+  }
+
+  .btn:hover .btn__icon--external {
+    translate: calc(var(--space-2xs) / 2) calc(var(--space-2xs) / -2);
+  }
+
+  /* ------------------------------------------------ Shiki (css-variables theme) */
+  .astro-code {
+    background-color: var(--astro-code-background) !important;
+    color: var(--astro-code-foreground);
+    border-radius: var(--radius-md);
+  }
+
+  /* ------------------------------------------------------ Reveal on scroll */
+  /* Content stays visible without JS (no .js class), under reduced motion, and in print. */
+  @media (prefers-reduced-motion: no-preference) {
+    .js [data-reveal] {
+      transition:
+        opacity var(--duration-slow) var(--ease-emphasized),
+        translate var(--duration-slow) var(--ease-emphasized);
+      transition-delay: calc(var(--reveal-step, 0) * var(--reveal-stagger));
+    }
+
+    .js [data-reveal]:not([data-revealed]) {
+      opacity: 0;
+      translate: 0 var(--reveal-distance);
+    }
+  }
+}
+
+/* ============================================================== 6. Utilities */
 
 /* Visually hidden until focused — used by the skip link. */
 @utility sr-only-focusable {
@@ -38,23 +664,238 @@
     padding: 0;
     margin: -1px;
     overflow: hidden;
-    clip: rect(0, 0, 0, 0);
+    clip-path: inset(50%);
     white-space: nowrap;
     border-width: 0;
   }
 }
 
-/* Shiki dual themes (defaultColor: false): colours come from CSS variables. */
-.astro-code,
-.astro-code span {
-  color: var(--shiki-light);
-  background-color: var(--shiki-light-bg);
+/* Page frame: centred, max 76rem, fluid side padding. */
+@utility container-page {
+  width: 100%;
+  max-width: var(--container-page);
+  margin-inline: auto;
+  padding-inline: var(--spacing-gutter);
 }
 
-@media (prefers-color-scheme: dark) {
-  .astro-code,
-  .astro-code span {
-    color: var(--shiki-dark);
-    background-color: var(--shiki-dark-bg);
+/* Graph-paper motif (fine grid lines). Put it on a decorative, aria-hidden layer. */
+@utility bg-grid {
+  background-image:
+    linear-gradient(to right, var(--color-border) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--color-border) 1px, transparent 1px);
+  background-size: var(--grid-size) var(--grid-size);
+  background-position: -1px -1px;
+}
+
+/* Inline text link in the accent colour (for links outside <Prose>). */
+@utility link {
+  color: var(--color-accent);
+  text-decoration-line: underline;
+  text-decoration-color: color-mix(in oklab, var(--color-accent) 45%, transparent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+  transition: text-decoration-color var(--duration-fast) var(--ease-standard);
+
+  &:hover {
+    color: var(--color-accent-strong);
+    text-decoration-color: currentColor;
+  }
+}
+
+/* Screen-only / print-only helpers (Tailwind's `print:` variant also works). */
+@utility print-only {
+  display: none;
+}
+
+/* ================================================================ 7. Print */
+/*
+ * /work and /academic "Save as PDF" as a clean 1–2 page CV (export-cv-pdf skill):
+ * black on white, serif body, no chrome or motion, URLs after links, no page breaks
+ * inside timeline items or cards. Print is token-driven: the type and space scales are
+ * re-declared in pt below, so every component shrinks consistently.
+ */
+@media print {
+  @page {
+    size: A4;
+    margin: 14mm;
+  }
+
+  :root {
+    color-scheme: light;
+
+    /* Colour: black on white. */
+    --color-background: white;
+    --color-surface: white;
+    --color-sunken: white;
+    --color-foreground: black;
+    --color-muted: var(--color-neutral-700);
+    --color-faint: var(--color-neutral-500);
+    --color-border: var(--color-neutral-300);
+    --color-border-strong: var(--color-neutral-500);
+    --color-accent: black;
+    --color-accent-strong: black;
+    --tint: black;
+    --astro-code-foreground: black;
+    --astro-code-token-comment: var(--color-neutral-700);
+    --astro-code-token-keyword: black;
+    --astro-code-token-string: black;
+    --astro-code-token-string-expression: black;
+    --astro-code-token-constant: black;
+    --astro-code-token-function: black;
+    --astro-code-token-parameter: black;
+    --astro-code-token-punctuation: black;
+    --astro-code-token-link: black;
+
+    /* Type scale (pt). */
+    --text-xs: 7.5pt;
+    --text-sm: 8.5pt;
+    --text-base: 10pt;
+    --text-lg: 10.5pt;
+    --text-xl: 11.5pt;
+    --text-2xl: 12.5pt;
+    --text-3xl: 14pt;
+    --text-4xl: 17pt;
+    --text-5xl: 20pt;
+    --leading-body: 1.4;
+
+    /* Space scale (pt). */
+    --space-2xs: 1.5pt;
+    --space-xs: 3pt;
+    --space-sm: 4pt;
+    --space-md: 6pt;
+    --space-lg: 8pt;
+    --space-xl: 10pt;
+    --space-2xl: 12pt;
+    --space-3xl: 14pt;
+    --spacing-gutter: 0;
+    --spacing-section: 10pt;
+    --spacing-block: 6pt;
+    --spacing-stack: 4pt;
+    --print-gap: 6pt;
+    --tl-date-col: 6.5rem;
+    --tl-rail: 1.25rem;
+    --tl-node: 0.5rem;
+    --size-target: auto;
+    --size-mark: auto;
+  }
+
+  [data-page],
+  [data-tint] {
+    --tint: black;
+  }
+
+  html,
+  body {
+    background: white !important;
+    color: black !important;
+  }
+
+  body {
+    display: block;
+    font-family: var(--font-serif);
+    font-size: var(--text-base);
+    line-height: var(--leading-body);
+  }
+
+  /* Chrome, controls and decoration. */
+  .site-header,
+  .site-footer__sections,
+  .site-footer__meta,
+  .theme-toggle,
+  .nav-toggle,
+  .heading-anchor,
+  [data-print='hide'],
+  .sr-only-focusable {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+  }
+
+  .container-page {
+    max-width: none;
+    padding-inline: 0;
+  }
+
+  *,
+  ::before,
+  ::after {
+    box-shadow: none !important;
+    text-shadow: none !important;
+    transition: none !important;
+    animation: none !important;
+  }
+
+  .js [data-reveal] {
+    opacity: 1 !important;
+    translate: none !important;
+  }
+
+  [data-decorative] {
+    display: none !important;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  p,
+  li {
+    orphans: 3;
+    widows: 3;
+  }
+
+  /* Keep entries whole. */
+  article,
+  figure,
+  .card,
+  .tl-item {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* <details> print expanded (site.ts also opens them on `beforeprint`). */
+  details::details-content {
+    content-visibility: visible;
+    display: contents;
+  }
+
+  details > summary {
+    display: none;
+  }
+
+  /* Show where links go. Internal links opt in with data-print-url="<absolute URL>";
+     links whose text already is the URL opt out with data-no-print-url. */
+  a {
+    color: inherit !important;
+    text-decoration: none !important;
+  }
+
+  a[href^='http']:not([data-no-print-url])::after {
+    content: ' <' attr(href) '>';
+  }
+
+  a[data-print-url]:not([data-no-print-url])::after {
+    content: ' <' attr(data-print-url) '>';
+  }
+
+  a[href^='http']:not([data-no-print-url])::after,
+  a[data-print-url]:not([data-no-print-url])::after {
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    font-weight: 400;
+    overflow-wrap: anywhere;
+    color: var(--color-muted);
+  }
+
+  pre,
+  .astro-code {
+    white-space: pre-wrap !important;
+    border: var(--rule-width) solid var(--color-border);
   }
 }

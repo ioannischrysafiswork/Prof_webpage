@@ -1,0 +1,40 @@
+---
+/**
+ * No-flash theme bootstrap. Must be rendered inside <head>, before any stylesheet paints.
+ *
+ * - Resolves the theme: stored choice (localStorage "theme") → OS preference.
+ * - Sets html[data-theme="light|dark"] (drives `color-scheme`, hence every light-dark()
+ *   token) and html.js (enables JS-only UI such as the toggle, menu and reveal).
+ * - Survives Astro <ClientRouter /> navigation: re-applies both on the incoming document
+ *   in `astro:before-swap`, so there is no flash between pages.
+ * - Follows OS changes live while the visitor has not chosen a theme.
+ * localStorage access is wrapped in try/catch (private mode, disabled storage).
+ */
+---
+
+<script is:inline>
+  (() => {
+    const KEY = 'theme';
+    const media = window.matchMedia('(prefers-color-scheme: dark)');
+    const stored = () => {
+      try {
+        const value = window.localStorage.getItem(KEY);
+        return value === 'light' || value === 'dark' ? value : null;
+      } catch {
+        return null;
+      }
+    };
+    const resolve = () => stored() || (media.matches ? 'dark' : 'light');
+    const apply = (doc) => {
+      doc.documentElement.dataset.theme = resolve();
+      doc.documentElement.classList.add('js');
+    };
+    apply(document);
+    document.addEventListener('astro:before-swap', (event) => apply(event.newDocument));
+    media.addEventListener('change', () => {
+      if (stored()) return;
+      apply(document);
+      document.dispatchEvent(new CustomEvent('site:themechange'));
+    });
+  })();
+</script>
