@@ -16,6 +16,7 @@
       context: Python GUI for the RNS neutron-star code (Bachelor's thesis); simulations in the MSc in Computational Physics
       icon: simple-icons:python
     - name: C
+      context: numerical simulations, RNS code (rns.c)
       icon: simple-icons:c
 
 - id: scientific-computing
