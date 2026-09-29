@@ -1,11 +1,93 @@
 # Certifications — one list item per certificate; `id` must be unique (kebab-case).
 # Schema: src/content.config.ts (certifications).
+# Names are exactly as printed on the certificate (Udemy) or as listed on the CV (Oracle).
 
-- id: todo-certification
-  name: 'TODO(ioannis): certification name'
-  issuer: 'TODO(ioannis): issuing organisation'
-  date: 'TODO(ioannis): issue date as YYYY-MM'
-  credentialId: 'TODO(ioannis): credential ID, if any'
+# --- Earned while at Netcompany-Intrasoft (source: certificates/*.pdf; Ioannis) ---
+
+- id: udemy-claude-code-practical-guide
+  name: Claude Code - The Practical Guide
+  issuer: Udemy
+  date: '2026-08'
+  credentialId: UC-9173645e-62d6-45d0-a270-4df5b2776db0
+  summary: 'Certificate of completion, 3 total hours. Instructors: Academind by Maximilian Schwarzmüller. Completed while at Netcompany-Intrasoft.'
+  tech:
+    - Claude Code
   links:
-    credential: 'TODO(ioannis): verification URL, if any'
+    credential: https://ude.my/UC-9173645e-62d6-45d0-a270-4df5b2776db0
   featured: false
+
+- id: udemy-oracle-sql-performance-tuning
+  name: 'Oracle SQL : Mastering Oracle SQL Performance Tuning'
+  issuer: Udemy
+  date: '2026-06'
+  credentialId: UC-eeee1370-a05d-4597-a1e4-38951a4b920b
+  summary: 'Certificate of completion, 6.5 total hours. Instructor: Prathap G. Completed while at Netcompany-Intrasoft.'
+  tech:
+    - Oracle SQL
+    - SQL performance tuning
+  links:
+    credential: https://ude.my/UC-eeee1370-a05d-4597-a1e4-38951a4b920b
+  featured: true
+
+- id: udemy-plsql-by-example
+  name: PL/SQL by Example - Beginner to Advanced PL/SQL
+  issuer: Udemy
+  date: '2025-12'
+  credentialId: UC-7fd06ced-dec4-4bb1-9e24-431839548fd0
+  summary: 'Certificate of completion, 5.5 total hours. Instructor: Amarnath Reddy. Completed while at Netcompany-Intrasoft.'
+  tech:
+    - PL/SQL
+  links:
+    credential: https://ude.my/UC-7fd06ced-dec4-4bb1-9e24-431839548fd0
+  featured: false
+
+- id: udemy-oracle-database-architecture
+  name: Oracle Database Architecture
+  issuer: Udemy
+  date: '2025-12'
+  credentialId: UC-4dfc9f38-5dbe-4c42-a55d-85f0b2b789cd
+  summary: 'Certificate of completion, 3.5 total hours. Instructors: TISYA Software Solutions Private Limited, Ramkumar Swaminathan. Completed while at Netcompany-Intrasoft.'
+  tech:
+    - Oracle Database
+  links:
+    credential: https://ude.my/UC-4dfc9f38-5dbe-4c42-a55d-85f0b2b789cd
+  featured: false
+
+# --- Listed on the CV of Aug 2025 (source: cv-2025-08-17.pdf p1). Dates/IDs not on the CV. ---
+
+- id: oci-2024-application-integration-professional
+  name: Oracle Cloud Infrastructure 2024 Certified Application Integration Professional
+  issuer: Oracle
+  date: 'TODO(ioannis): issue month as YYYY-MM'
+  credentialId: 'TODO(ioannis): credential ID, if you want it shown'
+  tech:
+    - Oracle Integration Cloud
+  links:
+    credential: 'TODO(ioannis): verification URL (Oracle CertView / Credly), if any'
+  featured: true
+  order: 1
+
+- id: oci-2024-generative-ai-professional
+  name: Oracle Cloud Infrastructure 2024 Generative AI Certified Professional
+  issuer: Oracle
+  date: 'TODO(ioannis): issue month as YYYY-MM'
+  credentialId: 'TODO(ioannis): credential ID, if you want it shown'
+  tech:
+    - Generative AI
+    - Oracle Cloud Infrastructure
+  links:
+    credential: 'TODO(ioannis): verification URL (Oracle CertView / Credly), if any'
+  featured: true
+  order: 2
+
+- id: oci-foundations-2021-associate
+  name: Oracle Cloud Infrastructure Foundations 2021 Associate
+  issuer: Oracle
+  date: 'TODO(ioannis): issue month as YYYY-MM'
+  credentialId: 'TODO(ioannis): credential ID, if you want it shown'
+  tech:
+    - Oracle Cloud Infrastructure
+  links:
+    credential: 'TODO(ioannis): verification URL (Oracle CertView / Credly), if any'
+  featured: false
+  order: 3

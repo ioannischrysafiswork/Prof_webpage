@@ -1,39 +1,97 @@
 # Skills grouped by category, each with context of use. No ratings or percentages.
 # Schema: src/content.config.ts (skills). Groups are structural; items must be verified.
+# Sources: cv-2025-08-17.pdf (CV), certificates/*.pdf (courses completed at
+# Netcompany-Intrasoft), github.com/giannis93/Bachelor-thesis-prog. See source-material/_inventory.md.
 
 - id: programming-languages
   group: Programming languages
   order: 1
   items:
-    - name: 'TODO(ioannis): languages you use'
-      context: 'TODO(ioannis): what you use each one for'
+    - name: SQL
+      context: Complex reporting and extraction queries on Oracle Cloud at Deloitte; Oracle SQL performance tuning (course, 2026)
+      icon: lucide:database
+    - name: PL/SQL
+      context: Procedures and data extraction packages at Deloitte; PL/SQL by Example course (2025)
+    - name: Python
+      context: Python GUI for the RNS neutron-star code (Bachelor's thesis); simulations in the MSc in Computational Physics
+      icon: simple-icons:python
+    - name: C
+      icon: simple-icons:c
 
 - id: scientific-computing
   group: Scientific computing
   order: 2
   items:
-    - name: 'TODO(ioannis): numerical libraries, simulation tools'
+    - name: Numerical methods and simulation
+      context: Simulations in electromagnetics, quantum mechanics and materials (MSc)
+    - name: OpenMP
+      context: Parallel computing (MSc)
+    - name: HPC clusters
+      context: Deployed the Bachelor's thesis simulations on the "Aristotelis" cluster of Aristotle University
+    - name: MATLAB
+      context: Numerical methods (MSc)
+    - name: Matplotlib and Tkinter
+      context: Plotting and GUI for the RNS code interface (Bachelor's thesis)
 
 - id: web-and-software
   group: Web & software
   order: 3
   items:
-    - name: 'TODO(ioannis): frameworks and software engineering tools'
+    - name: REST and SOAP APIs
+      context: API-driven integration solutions at Deloitte, alongside Postman and SoapUI
+    - name: Oracle Integration Cloud
+      context: Integration workflows at Deloitte; OCI 2024 Certified Application Integration Professional
+      icon: simple-icons:oracle
+    - name: Claude Code
+      context: AI-assisted software development; Claude Code - The Practical Guide (course, 2026)
+      icon: simple-icons:claude
+    - name: Generative AI on Oracle Cloud Infrastructure
+      context: OCI 2024 Generative AI Certified Professional
 
 - id: data-and-tools
   group: Data & tools
   order: 4
   items:
-    - name: 'TODO(ioannis): data, analysis and productivity tools'
+    - name: Oracle Database
+      context: Database architecture (course, 2025); SQL and PL/SQL development
+      icon: simple-icons:oracle
+    - name: SQL performance tuning
+      context: Optimising complex queries at Deloitte; Mastering Oracle SQL Performance Tuning (course, 2026)
+    - name: BI Publisher
+      context: Reports for Oracle HCM Cloud modules at Deloitte
+    - name: Oracle HCM and SCM Cloud
+      context: Cloud BI reporting and data extraction at Deloitte
+    - name: Data transformation, reporting pipelines and data automation
+      context: Automated reporting and extraction at Deloitte
+    - name: Oracle SQL Developer
+    - name: Excel
 
 - id: platforms-and-devops
   group: Platforms & DevOps
   order: 5
   items:
-    - name: 'TODO(ioannis): cloud platforms, operating systems, CI/CD'
+    - name: Oracle Cloud Infrastructure
+      context: OCI Foundations 2021 Associate; OCI 2024 Professional certifications
+    - name: SFTP/FTP pipelines
+      context: Inbound and outbound data files and report triggers at Deloitte, with WinSCP
+    - name: Git
+      icon: simple-icons:git
 
 - id: professional-skills
   group: Professional skills
   order: 6
   items:
-    - name: 'TODO(ioannis): professional skills and spoken languages'
+    - name: Teaching
+      context: Structured physics lessons and exam preparation for high-school students (2015–2020)
+    - name: Collaboration on integrations
+      context: Integration workflows and API-driven solutions with colleagues at Deloitte
+
+# The profile schema has no languages field, so spoken languages live here.
+- id: languages
+  group: Languages
+  order: 7
+  items:
+    - name: Greek
+      context: Native
+    - name: English
+      context: Fluent; certified by the University of Michigan (2006)

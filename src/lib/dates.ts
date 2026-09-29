@@ -161,7 +161,8 @@ export function compareByDateDesc(a: Dated, b: Dated, now: Date = new Date()): n
     const end = toMonthIndex(endValue, 'end', now);
     const ongoing = parseDate(item.end).kind === 'present';
     const NEG = Number.NEGATIVE_INFINITY;
-    return [ongoing ? Number.POSITIVE_INFINITY : (end ?? NEG), start ?? NEG];
+    // An unknown (TODO) end falls back to the start, so the entry still sorts by when it began.
+    return [ongoing ? Number.POSITIVE_INFINITY : (end ?? start ?? NEG), start ?? NEG];
   };
   const [aEnd, aStart] = key(a);
   const [bEnd, bStart] = key(b);
