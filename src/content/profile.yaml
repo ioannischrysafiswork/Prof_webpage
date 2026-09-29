@@ -16,7 +16,7 @@ intro:
   work: 'My work sits where data, reporting and integration meet. At Deloitte I built and maintained BI Publisher reports for Oracle HCM Cloud, optimised complex SQL and PL/SQL, ran SFTP/FTP file pipelines and worked with colleagues on Oracle Integration Cloud workflows. Moving from computational physics into enterprise data, and now to Netcompany-Intrasoft, has meant learning new systems and settling into new teams quickly. I keep investing in the fundamentals, most recently Oracle database architecture, PL/SQL and SQL performance tuning.'
   academic: "Computational physics has been the thread of my studies at Aristotle University of Thessaloniki, through a Bachelor's and a Master's degree. My Bachelor's thesis studied rotating neutron stars with the RNS code: I wrote a Python GUI to configure, run and plot the models, and deployed the simulations on the university's HPC cluster. The Master's took me into simulations in electromagnetics, quantum mechanics and materials, using numerical methods, OpenMP, Python and MATLAB. What draws me is using computation to make physical problems understandable."
 introStatus:
-  home: draft # variant A approved; the closing hobbies sentence is new and awaits approval
+  home: approved
   work: approved
   academic: approved
 

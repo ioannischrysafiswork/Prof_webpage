@@ -1,0 +1,24 @@
+---
+# Source: github.com/ioannischrysafiswork/oracle-versioner README and file tree (2026-09-29).
+# Featured at Ioannis's request (2026-09-29).
+title: Oracle Versioner
+tagline: Keeps Oracle database source code continuously and incrementally versioned in Git, committing only objects changed since the last successful run.
+start: '2026-08'
+highlights:
+  - Incremental change detection per schema using a LAST_DDL_TIME watermark.
+  - Deterministic, logic-preserving normalisation of exported DDL across 12 object types.
+  - Commits and pushes only on change; run metadata is saved only after a successful push, with a dry-run mode.
+  - Documented architecture, deployment, runbook and a requirement → module → test traceability matrix.
+tech:
+  - Python
+  - python-oracledb
+  - Oracle Database
+  - Git
+  - Docker
+  - GitLab CI/CD
+  - pytest
+links:
+  repo: https://github.com/ioannischrysafiswork/oracle-versioner
+featured: true
+order: 1
+---

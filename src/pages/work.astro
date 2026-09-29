@@ -52,7 +52,7 @@ const experience = sortByDateDesc(experienceEntries, (entry) => entry.data);
 
 const cv = publishedDocument(profile.cv.work);
 const academic = NAV.find((item) => item.key === 'academic');
-const github = profile.socials.find(
+const githubAccounts = profile.socials.filter(
   (social) => hasValue(social.url) && /^https:\/\/(www\.)?github\.com\//i.test(social.url),
 );
 
@@ -131,10 +131,16 @@ const jsonLd = workJsonLd({
     eyebrow={SECTIONS.projects.eyebrow}
     title={SECTIONS.projects.label}
   >
-    {github && (
-      <LinkButton slot="actions" href={url(github.url)} size="sm" data-print="hide">
-        All repositories on {github.label}
-      </LinkButton>
+    {githubAccounts.length > 0 && (
+      <Fragment slot="actions">
+        {githubAccounts.map((account) => (
+          <LinkButton href={url(account.url)} size="sm" data-print="hide">
+            {account.handle
+              ? `More on GitHub: ${account.handle}`
+              : `All repositories on ${account.label}`}
+          </LinkButton>
+        ))}
+      </Fragment>
     )}
     {projects.length > 0 ? (
       <ProjectGrid entries={projects} />

@@ -1,12 +1,10 @@
 name: Deploy to GitHub Pages
 
-# Not live yet: the site deploys only when run manually (Actions → Deploy to GitHub Pages →
-# Run workflow). Once real content replaces the TODO(ioannis) placeholders, uncomment the
-# `push` trigger so every push to `main` deploys, and set Settings → Pages → Source:
-# "GitHub Actions".
+# Every push to `main` deploys (Settings → Pages → Source: "GitHub Actions").
+# It can also be run manually from Actions → Deploy to GitHub Pages → Run workflow.
 on:
-  # push:
-  #   branches: [main]
+  push:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
